@@ -17,26 +17,45 @@ class Shortcodes {
 		ob_start();
 		$plugin = Plugin::instance();
 		$user_id = get_current_user_id();
-		$current_plan = $user_id ? (get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free') : 'free';
+		$current_plan = $user_id ? (get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free') : 'none';
 		?>
 		<div class="ffp-pricing-grid-public">
 			<style>
 				.ffp-pricing-grid-public { display: flex; gap: 20px; text-align: center; }
-				.ffp-price-card { border: 1px solid #ddd; padding: 20px; border-radius: 10px; flex: 1; }
+				.ffp-price-card { border: 1px solid #ddd; padding: 20px; border-radius: 10px; flex: 1; transition: transform 0.2s; }
+				.ffp-price-card:hover { transform: translateY(-5px); border-color: #4f46e5; }
+				.ffp-price-card h4 { margin: 10px 0; color: #4f46e5; }
+				.ffp-price-card .price { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+				.ffp-price-card button, .ffp-price-card .btn { background: #4f46e5; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; }
 			</style>
 			<div class="ffp-price-card">
 				<h4>Free</h4>
-				<p>$0</p>
-				<button disabled>Get Started</button>
+				<p class="price">$0 /mo</p>
+				<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
+					<input type="hidden" name="action" value="ffp_external_upgrade">
+					<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
+					<input type="hidden" name="plan_id" value="free">
+					<button type="submit" <?php disabled($current_plan, 'free'); ?>><?php echo $user_id ? 'Current Plan' : 'Join Free'; ?></button>
+				</form>
 			</div>
 			<div class="ffp-price-card">
 				<h4>Pro</h4>
-				<p>$29</p>
+				<p class="price">$29 /mo</p>
 				<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
 					<input type="hidden" name="action" value="ffp_external_upgrade">
 					<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
 					<input type="hidden" name="plan_id" value="price_pro">
-					<button type="submit" class="button">Upgrade</button>
+					<button type="submit" <?php disabled($current_plan, 'pro'); ?>><?php echo $current_plan === 'pro' ? 'Active' : 'Get Pro'; ?></button>
+				</form>
+			</div>
+			<div class="ffp-price-card">
+				<h4>Agency</h4>
+				<p class="price">$99 /mo</p>
+				<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
+					<input type="hidden" name="action" value="ffp_external_upgrade">
+					<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
+					<input type="hidden" name="plan_id" value="price_agency">
+					<button type="submit" <?php disabled($current_plan, 'agency'); ?>><?php echo $current_plan === 'agency' ? 'Active' : 'Get Agency'; ?></button>
 				</form>
 			</div>
 		</div>

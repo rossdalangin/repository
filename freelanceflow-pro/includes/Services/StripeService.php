@@ -15,28 +15,29 @@ class StripeService implements PaymentService {
 		$this->webhook_secret = $webhook_secret;
 	}
 
-	public function create_checkout_session( $plan_id, $user_id ) {
+	public function create_checkout_session( $plan_id, $user_id, $meta = [] ) {
 		if ( ! class_exists( '\Stripe\Stripe' ) ) {
 			return false;
 		}
 
 		\Stripe\Stripe::setApiKey( $this->api_key );
 
-		$session = \Stripe\Checkout\Session::create( [
+		$session_args = [
 			'payment_method_types' => [ 'card' ],
-			'line_items'           => [ [
-				'price'    => $plan_id, // Stripe Price ID
-				'quantity' => 1,
-			] ],
 			'mode'                 => 'subscription',
-			'success_url'          => admin_url( 'admin.php?page=ffp-dashboard&tab=subscription&status=success' ),
-			'cancel_url'           => admin_url( 'admin.php?page=ffp-dashboard&tab=subscription&status=cancel' ),
-			'metadata'             => [
-				'user_id' => $user_id,
-			],
-		] );
+			'success_url'          => admin_url( 'admin.php?page=ffp-dashboard&status=success' ),
+			'cancel_url'           => home_url( '/pricing?status=cancel' ),
+			'metadata'             => array_merge( [ 'user_id' => $user_id ], $meta ),
+		];
 
-		return $session;
+		if ( $plan_id !== 'free' ) {
+			$session_args['line_items'] = [ [
+				'price'    => $plan_id,
+				'quantity' => 1,
+			] ];
+		}
+
+		return \Stripe\Checkout\Session::create( $session_args );
 	}
 
 	public function handle_webhook( $payload, $signature ) {
@@ -55,16 +56,37 @@ class StripeService implements PaymentService {
 		switch ( $event->type ) {
 			case 'checkout.session.completed':
 				$session = $event->data->object;
-				$user_id = (int) $session->metadata->user_id;
-				$price_id = $session->line_items->data[0]->price->id ?? '';
+				$user_id = (int) ($session->metadata->user_id ?? 0);
+				$is_guest = $session->metadata->is_guest ?? '0';
+				$price_id = $session->metadata->plan_id ?? '';
+				$agency_id = (int) ($session->metadata->agency_id ?? 0);
 
-				// Map price IDs to plan types
-				$plan = 'pro';
-				if ( strpos( $price_id, 'agency' ) !== false ) {
-					$plan = 'agency';
+				// Create user for guests
+				if ( $is_guest === '1' && $user_id === 0 ) {
+					$email = $session->customer_details->email;
+					$username = strstr($email, '@', true) . '_' . rand(100, 999);
+
+					if ( ! email_exists($email) ) {
+						$user_id = wp_create_user( $username, wp_generate_password(), $email );
+					} else {
+						$user_id = get_user_by('email', $email)->ID;
+					}
 				}
 
-				update_user_meta( $user_id, 'ffp_user_plan', $plan );
+				if ( $user_id > 0 ) {
+					$plan = 'pro';
+					if ( strpos( $price_id, 'agency' ) !== false || $price_id === 'price_agency' ) {
+						$plan = 'agency';
+					} elseif ( $price_id === 'free' ) {
+						$plan = 'free';
+					}
+
+					update_user_meta( $user_id, 'ffp_user_plan', $plan );
+
+					if ( $agency_id > 0 ) {
+						update_user_meta( $user_id, 'ffp_parent_agency', $agency_id );
+					}
+				}
 				break;
 		}
 

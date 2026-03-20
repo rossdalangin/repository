@@ -82,7 +82,28 @@ class App {
 	public function handle_stripe_webhook( $request ) {
 		$payload   = $request->get_body();
 		$signature = $request->get_header( 'stripe-signature' );
-		$stripe    = Plugin::instance()->get( 'stripe' );
+		$data      = json_decode( $payload, true );
+
+		// Determine which Stripe keys to use based on the metadata in the event
+		$stripe_secret = '';
+		$webhook_secret = '';
+
+		// We need to look inside the event object (session object) for metadata
+		$meta = $data['data']['object']['metadata'] ?? [];
+		$agency_id = isset( $meta['agency_id'] ) ? absint( $meta['agency_id'] ) : 0;
+
+		if ( $agency_id > 0 ) {
+			$stripe_secret = get_user_meta( $agency_id, 'ffp_agency_stripe_key', true );
+			$webhook_secret = get_user_meta( $agency_id, 'ffp_agency_stripe_secret', true );
+		}
+
+		// Fallback to global keys
+		if ( empty( $stripe_secret ) ) {
+			$stripe_secret = get_option( 'ffp_stripe_secret_key' );
+			$webhook_secret = get_option( 'ffp_stripe_webhook_secret' );
+		}
+
+		$stripe = new \FreelanceFlowPro\Services\StripeService( $stripe_secret, $webhook_secret );
 
 		if ( $stripe && $stripe->handle_webhook( $payload, $signature ) ) {
 			return new \WP_REST_Response( [ 'status' => 'success' ], 200 );

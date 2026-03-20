@@ -161,8 +161,10 @@ class Settings {
 		$plan_id   = sanitize_text_field( $_POST['plan_id'] );
 		$user_id   = get_current_user_id();
 
-		if ( ! $user_id ) {
-			wp_redirect( wp_login_url() );
+		// Handle Free Plan immediately for logged in users
+		if ( $user_id && $plan_id === 'free' ) {
+			update_user_meta( $user_id, 'ffp_user_plan', 'free' );
+			wp_redirect( admin_url('admin.php?page=ffp-dashboard') );
 			exit;
 		}
 
@@ -179,7 +181,19 @@ class Settings {
 		}
 
 		$stripe = new \FreelanceFlowPro\Services\StripeService( $stripe_key );
-		$session = $stripe->create_checkout_session( $plan_id, $user_id );
+
+		// For guests, we pass metadata to the webhook to create the user
+		$meta = [
+			'plan_id'   => $plan_id,
+			'agency_id' => $agency_id
+		];
+		if ( $user_id ) {
+			$meta['user_id'] = $user_id;
+		} else {
+			$meta['is_guest'] = '1';
+		}
+
+		$session = $stripe->create_checkout_session( $plan_id, $user_id ?: 0, $meta );
 
 		if ( $session && isset( $session->url ) ) {
 			wp_redirect( $session->url );
@@ -358,6 +372,9 @@ class Settings {
 	}
 
 	private function render_profile_tab() {
+		$user_id_current = get_current_user_id();
+		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+		$is_admin = current_user_can( 'manage_options' );
 		?>
 		<div class="ffp-card">
 			<h3>User Profile & Branding</h3>
@@ -795,6 +812,13 @@ class Settings {
 		if ( ! is_user_logged_in() ) wp_send_json_error();
 
 		$file_id = absint( $_POST['file_id'] );
+
+		// IDOR check
+		$attachment = get_post($file_id);
+		if ( ! current_user_can('manage_options') && (int)$attachment->post_author !== get_current_user_id() ) {
+			wp_send_json_error(['message' => 'Forbidden']);
+		}
+
 		$cat = sanitize_text_field( $_POST['category'] );
 
 		update_post_meta( $file_id, 'ffp_vault_category', $cat );
@@ -806,6 +830,13 @@ class Settings {
 		if ( ! is_user_logged_in() ) wp_send_json_error();
 
 		$file_id = absint( $_POST['file_id'] );
+
+		// IDOR check
+		$attachment = get_post($file_id);
+		if ( ! current_user_can('manage_options') && (int)$attachment->post_author !== get_current_user_id() ) {
+			wp_send_json_error(['message' => 'Forbidden']);
+		}
+
 		$visibility = sanitize_text_field( $_POST['visibility'] );
 
 		update_post_meta( $file_id, 'ffp_vault_visibility', $visibility );
