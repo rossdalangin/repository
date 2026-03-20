@@ -17,13 +17,32 @@ class DocumentService {
 		$dompdf->loadHtml( $html );
 		$dompdf->setPaper( 'A4', 'portrait' );
 
-		// Set options for better compatibility
+		// Set options for better compatibility (Crucial for XAMPP/Local)
 		$options = $dompdf->getOptions();
 		$options->set( 'isRemoteEnabled', true );
-		$options->set( 'defaultFont', 'Arial' );
+		$options->set( 'defaultFont', 'DejaVu Sans' );
+		$options->set( 'chroot', FFP_PATH );
+		$options->set( 'tempDir', sys_get_temp_dir() );
+
+		// XAMPP SSL Fix for remote images
+		$context = stream_context_create([
+			'ssl' => [
+				'verify_peer' => false,
+				'verify_peer_name' => false,
+				'allow_self_signed' => true
+			]
+		]);
+		$dompdf->setHttpContext($context);
+
 		$dompdf->setOptions( $options );
 
-		$dompdf->render();
+		try {
+			$dompdf->render();
+		} catch (\Exception $e) {
+			if (defined('WP_DEBUG') && WP_DEBUG) {
+				error_log('Dompdf Render Error: ' . $e->getMessage());
+			}
+		}
 
 		// Clear any previous output buffers to prevent corruption
 		if ( ob_get_length() ) {
@@ -53,8 +72,13 @@ class DocumentService {
 		$engine = $plugin->get( 'template_engine' );
 
 		// Inject Branding Data
+		$user_id = get_current_user_id();
 		$placeholders['business_name'] = get_option( 'ffp_business_name', 'FreelanceFlow User' );
 		$placeholders['business_logo'] = get_option( 'ffp_logo_url', '' );
+
+		// Specific branding for Agency/Pro if set in meta (optional override)
+		$meta_name = get_user_meta( $user_id, 'ffp_business_name', true );
+		if ( $meta_name ) $placeholders['business_name'] = $meta_name;
 
 		$parsed = $engine->parse_template_content( $template_body, $placeholders );
 

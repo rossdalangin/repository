@@ -17,6 +17,8 @@ class Settings {
 		add_action( 'admin_init', [ $this, 'handle_subscription_upgrade' ] );
 		add_action( 'admin_init', [ $this, 'handle_admin_actions' ] );
 		add_action( 'admin_init', [ $this, 'handle_create_subuser' ] );
+		add_action( 'admin_post_ffp_external_upgrade', [ $this, 'handle_external_upgrade' ] );
+		add_action( 'admin_post_nopriv_ffp_external_upgrade', [ $this, 'handle_external_upgrade' ] );
 
 		// AJAX Handlers
 		add_action( 'wp_ajax_ffp_get_template_fields', [ $this, 'ajax_get_template_fields' ] );
@@ -38,15 +40,29 @@ class Settings {
 			return;
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! is_user_logged_in() ) {
 			return;
 		}
 
-		update_option( 'ffp_business_name', sanitize_text_field( $_POST['ffp_business_name'] ) );
-		update_option( 'ffp_logo_url', esc_url_raw( $_POST['ffp_logo_url'] ) );
-		update_option( 'ffp_free_limit', (int) $_POST['ffp_free_limit'] );
+		$user_id_current = get_current_user_id();
+		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
 
-		add_settings_error( 'ffp_messages', 'ffp_message', 'Branding and Limits saved successfully.', 'updated' );
+		// Multi-tenant branding: Save to user meta
+		update_user_meta( $user_id_current, 'ffp_business_name', sanitize_text_field( $_POST['ffp_business_name'] ) );
+		update_user_meta( $user_id_current, 'ffp_logo_url', esc_url_raw( $_POST['ffp_logo_url'] ) );
+
+		// Admin-only global limit
+		if ( current_user_can( 'manage_options' ) ) {
+			update_option( 'ffp_free_limit', (int) $_POST['ffp_free_limit'] );
+		}
+
+		// Agency specific payment keys
+		if ( $user_plan === 'agency' ) {
+			update_user_meta( $user_id_current, 'ffp_agency_stripe_key', sanitize_text_field( $_POST['ffp_agency_stripe_key'] ) );
+			update_user_meta( $user_id_current, 'ffp_agency_stripe_secret', sanitize_text_field( $_POST['ffp_agency_stripe_secret'] ) );
+		}
+
+		add_settings_error( 'ffp_messages', 'ffp_message', 'Profile and Settings saved successfully.', 'updated' );
 	}
 
 	public function handle_admin_actions() {
@@ -140,6 +156,39 @@ class Settings {
 		}
 	}
 
+	public function handle_external_upgrade() {
+		$agency_id = isset( $_POST['agency_id'] ) ? absint( $_POST['agency_id'] ) : 0;
+		$plan_id   = sanitize_text_field( $_POST['plan_id'] );
+		$user_id   = get_current_user_id();
+
+		if ( ! $user_id ) {
+			wp_redirect( wp_login_url() );
+			exit;
+		}
+
+		$plugin = \FreelanceFlowPro\Core\Plugin::instance();
+
+		// Determine which keys to use
+		$stripe_key = '';
+		if ( $agency_id > 0 ) {
+			$stripe_key = get_user_meta( $agency_id, 'ffp_agency_stripe_key', true );
+		}
+
+		if ( empty($stripe_key) ) {
+			$stripe_key = get_option( 'ffp_stripe_secret_key' );
+		}
+
+		$stripe = new \FreelanceFlowPro\Services\StripeService( $stripe_key );
+		$session = $stripe->create_checkout_session( $plan_id, $user_id );
+
+		if ( $session && isset( $session->url ) ) {
+			wp_redirect( $session->url );
+			exit;
+		}
+
+		wp_die( 'Payment initialization failed.' );
+	}
+
 	public function handle_subscription_upgrade() {
 		if ( ! isset( $_POST['ffp_upgrade_nonce'] ) || ! wp_verify_nonce( $_POST['ffp_upgrade_nonce'], 'ffp_upgrade' ) ) {
 			return;
@@ -148,11 +197,26 @@ class Settings {
 		$plan_id = sanitize_text_field( $_POST['ffp_plan_id'] );
 		$user_id = get_current_user_id();
 		$plugin  = \FreelanceFlowPro\Core\Plugin::instance();
-		$stripe  = $plugin->get( 'stripe' );
 
-		if ( ! $stripe ) {
+		// Check if user has a parent agency and if agency is active
+		$parent_agency_id = (int) get_user_meta( $user_id, 'ffp_parent_agency', true );
+		$stripe_key = '';
+		if ( $parent_agency_id > 0 ) {
+			$parent_plan = get_user_meta( $parent_agency_id, 'ffp_user_plan', true );
+			if ( $parent_plan === 'agency' ) {
+				$stripe_key = get_user_meta( $parent_agency_id, 'ffp_agency_stripe_key', true );
+			}
+		}
+
+		if ( empty($stripe_key) ) {
+			$stripe_key = get_option( 'ffp_stripe_secret_key' );
+		}
+
+		if ( empty($stripe_key) ) {
 			wp_die( 'Stripe service not configured.' );
 		}
+
+		$stripe = new \FreelanceFlowPro\Services\StripeService( $stripe_key );
 
 		$session = $stripe->create_checkout_session( $plan_id, $user_id );
 		if ( $session && isset( $session->url ) ) {
@@ -192,14 +256,25 @@ class Settings {
 
 	public function render_dashboard() {
 		settings_errors( 'ffp_messages' );
+		$user_id_current = get_current_user_id();
+		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+		$is_admin = current_user_can( 'manage_options' );
+		$is_agency = ( $user_plan === 'agency' );
+
 		$tabs = [
 			'profile'      => 'Profile & Branding',
 			'generator'    => 'Template Generator',
 			'vault'        => 'File Vault',
 			'subscription' => 'Subscription & Payments',
-			'users'        => 'User Management',
-			'payments'     => 'Transaction Logs',
 		];
+
+		if ( $is_admin || $is_agency ) {
+			$tabs['users'] = 'User Management';
+		}
+
+		if ( $is_admin ) {
+			$tabs['payments'] = 'Transaction Logs';
+		}
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'profile';
 		$user_id_current = get_current_user_id();
@@ -207,6 +282,7 @@ class Settings {
 		$is_admin = current_user_can( 'manage_options' );
 		?>
 		<div class="wrap ffp-admin-wrap">
+			<?php if ( $is_admin || $is_agency ) : ?>
 			<div class="ffp-card" style="border-left: 5px solid #4f46e5; margin-bottom: 30px;">
 				<h3>🚀 Developer Reference: Embeds</h3>
 				<?php if ( $is_admin ) : ?>
@@ -217,8 +293,9 @@ class Settings {
 
 				<p><strong>HTML Embed Codes:</strong> (For any website)</p>
 				<p>Pricing Grid:</p>
-				<textarea readonly style="width:100%; height:60px; font-family:monospace; background:#f8fafc; font-size:11px;"><?php echo esc_textarea( \FreelanceFlowPro\Core\Plugin::instance()->get('shortcodes')->get_pricing_html() ); ?></textarea>
+				<textarea readonly style="width:100%; height:60px; font-family:monospace; background:#f8fafc; font-size:11px;"><?php echo esc_textarea( \FreelanceFlowPro\Core\Plugin::instance()->get('shortcodes')->get_pricing_html( $user_id_current ) ); ?></textarea>
 			</div>
+			<?php endif; ?>
 
 			<div class="ffp-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
 				<div class="ffp-branding">
@@ -289,20 +366,32 @@ class Settings {
 				<table class="form-table">
 					<tr>
 						<th>Business Name</th>
-						<td><input type="text" name="ffp_business_name" value="<?php echo esc_attr( get_option( 'ffp_business_name' ) ); ?>" class="regular-text" /></td>
+						<td><input type="text" name="ffp_business_name" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_business_name', true ) ?: get_option('ffp_business_name') ); ?>" class="regular-text" /></td>
 					</tr>
 					<tr>
 						<th>Logo URL</th>
-						<td><input type="text" name="ffp_logo_url" value="<?php echo esc_attr( get_option( 'ffp_logo_url' ) ); ?>" class="regular-text" /></td>
+						<td><input type="text" name="ffp_logo_url" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_logo_url', true ) ?: get_option('ffp_logo_url') ); ?>" class="regular-text" /></td>
 					</tr>
-				</table>
-				<table class="form-table">
+					<?php if ( $user_plan === 'agency' ) : ?>
 					<tr>
-						<th scope="row">Free User Document Limit</th>
-						<td><input type="number" name="ffp_free_limit" value="<?php echo esc_attr( get_option( 'ffp_free_limit', 3 ) ); ?>" class="small-text"></td>
+						<th>Stripe Secret Key (Agency)</th>
+						<td><input type="password" name="ffp_agency_stripe_key" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_stripe_key', true ) ); ?>" class="regular-text" /></td>
 					</tr>
+					<tr>
+						<th>Stripe Webhook Secret (Agency)</th>
+						<td><input type="password" name="ffp_agency_stripe_secret" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_stripe_secret', true ) ); ?>" class="regular-text" /></td>
+					</tr>
+					<?php endif; ?>
 				</table>
-				<input type="submit" class="button button-primary" value="Save Branding & Limits" />
+				<?php if ( $is_admin ) : ?>
+					<table class="form-table">
+						<tr>
+							<th scope="row">Free User Document Limit</th>
+							<td><input type="number" name="ffp_free_limit" value="<?php echo esc_attr( get_option( 'ffp_free_limit', 3 ) ); ?>" class="small-text"></td>
+						</tr>
+					</table>
+				<?php endif; ?>
+				<input type="submit" class="button button-primary" value="Save Settings" />
 			</form>
 		</div>
 		<?php
@@ -591,7 +680,9 @@ class Settings {
 
 			<hr style="margin: 40px 0;">
 
-			<h3>Payment Gateway Configuration</h3>
+			<?php if ( current_user_can( 'manage_options' ) ) : ?>
+			<hr style="margin: 40px 0;">
+			<h3>Global Payment Gateway Configuration</h3>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'ffp_payment_settings' ); ?>
 				<?php do_settings_sections( 'ffp-dashboard-payments' ); ?>
@@ -609,8 +700,9 @@ class Settings {
 						<td><input type="text" name="ffp_paypal_client_id" value="<?php echo esc_attr( get_option( 'ffp_paypal_client_id' ) ); ?>" class="regular-text"></td>
 					</tr>
 				</table>
-				<?php submit_button( 'Save Gateway Settings' ); ?>
+				<?php submit_button( 'Save Global Gateway Settings' ); ?>
 			</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

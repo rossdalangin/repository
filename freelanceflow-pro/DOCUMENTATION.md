@@ -22,9 +22,10 @@ High-converting document automation and secure repository for Virtual Assistants
 - **Limits:** Unlimited documents for owner and team.
 - **Rights:**
   - Manage all files created by their sub-users.
-  - **Create Sub-Users:** Can add up to [X] users to their team.
+  - **Create Sub-Users:** Can add up to [X] users to their team (Free or Pro tiers).
   - **Tier Management:** Can upgrade/downgrade their sub-users between Free and Pro.
-- **Instructions:** Use the 'User Management' tab to invite team members and set their access level. View 'File Vault' to manage team assets.
+  - **Agency Payments:** Can configure their own Stripe keys to receive payments directly from their team or HTML embeds.
+- **Instructions:** Use the 'User Management' tab to invite team members and set their access level. Configure your own Stripe keys in 'Profile & Branding' to enable direct monetization.
 
 ### **Administrator (The System Owner)**
 - **Dashboard Access:** Global Master Access.

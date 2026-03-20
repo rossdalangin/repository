@@ -13,7 +13,7 @@ class Shortcodes {
 		add_shortcode( 'ffp_file_list', [ $this, 'file_list' ] );
 	}
 
-	public function get_pricing_html() {
+	public function get_pricing_html( $agency_id = 0 ) {
 		ob_start();
 		$plugin = Plugin::instance();
 		$user_id = get_current_user_id();
@@ -32,7 +32,12 @@ class Shortcodes {
 			<div class="ffp-price-card">
 				<h4>Pro</h4>
 				<p>$29</p>
-				<a href="<?php echo admin_url('admin.php?page=ffp-dashboard&tab=subscription'); ?>" class="button">Upgrade</a>
+				<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
+					<input type="hidden" name="action" value="ffp_external_upgrade">
+					<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
+					<input type="hidden" name="plan_id" value="price_pro">
+					<button type="submit" class="button">Upgrade</button>
+				</form>
 			</div>
 		</div>
 		<?php
