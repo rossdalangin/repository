@@ -13,15 +13,13 @@ class Shortcodes {
 		add_shortcode( 'ffp_file_list', [ $this, 'file_list' ] );
 	}
 
-	public function pricing_grid() {
+	public function get_pricing_html() {
 		ob_start();
-		// We can reuse the logic from Settings or a dedicated template
 		$plugin = Plugin::instance();
 		$user_id = get_current_user_id();
 		$current_plan = $user_id ? (get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free') : 'free';
 		?>
 		<div class="ffp-pricing-grid-public">
-			<!-- Pricing table HTML (simplified version for public) -->
 			<style>
 				.ffp-pricing-grid-public { display: flex; gap: 20px; text-align: center; }
 				.ffp-price-card { border: 1px solid #ddd; padding: 20px; border-radius: 10px; flex: 1; }
@@ -39,6 +37,10 @@ class Shortcodes {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	public function pricing_grid() {
+		return $this->get_pricing_html();
 	}
 
 	public function file_list( $atts ) {

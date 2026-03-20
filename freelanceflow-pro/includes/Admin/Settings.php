@@ -100,6 +100,11 @@ class Settings {
 		$username = sanitize_user( $_POST['ffp_subuser_username'] );
 		$plan = sanitize_text_field( $_POST['ffp_subuser_plan'] );
 
+		// Security: Agencies cannot create other Agencies or Admins
+		if ( ! current_user_can( 'manage_options' ) && $plan === 'agency' ) {
+			$plan = 'pro';
+		}
+
 		if ( ! email_exists( $email ) && ! username_exists( $username ) ) {
 			$password = wp_generate_password();
 			$subuser_id = wp_create_user( $username, $password, $email );
@@ -176,13 +181,22 @@ class Settings {
 		];
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'profile';
+		$user_id_current = get_current_user_id();
+		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+		$is_admin = current_user_can( 'manage_options' );
 		?>
 		<div class="wrap ffp-admin-wrap">
 			<div class="ffp-card" style="border-left: 5px solid #4f46e5; margin-bottom: 30px;">
-				<h3>🚀 Developer Reference: Shortcodes</h3>
-				<p>Use these shortcodes on any page to display your premium features:</p>
-				<code>[ffp_pricing]</code> - Displays the subscription pricing grid.<br>
-				<code>[ffp_file_list category="legal" tier="pro"]</code> - Displays a list of files from a category.
+				<h3>🚀 Developer Reference: Embeds</h3>
+				<?php if ( $is_admin ) : ?>
+					<p><strong>Shortcodes:</strong> (WordPress Only)</p>
+					<code>[ffp_pricing]</code><br>
+					<code>[ffp_file_list category="legal"]</code><br><br>
+				<?php endif; ?>
+
+				<p><strong>HTML Embed Codes:</strong> (For any website)</p>
+				<p>Pricing Grid:</p>
+				<textarea readonly style="width:100%; height:60px; font-family:monospace; background:#f8fafc; font-size:11px;"><?php echo esc_textarea( \FreelanceFlowPro\Core\Plugin::instance()->get('shortcodes')->get_pricing_html() ); ?></textarea>
 			</div>
 
 			<div class="ffp-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
@@ -295,6 +309,9 @@ class Settings {
 							<select name="ffp_subuser_plan">
 								<option value="free">Free</option>
 								<option value="pro">Pro</option>
+								<?php if ( current_user_can( 'manage_options' ) ) : ?>
+									<option value="agency">Agency</option>
+								<?php endif; ?>
 							</select>
 						</td>
 					</tr>
