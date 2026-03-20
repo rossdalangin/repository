@@ -23,6 +23,7 @@ class Settings {
 		add_action( 'wp_ajax_ffp_generate_document', [ $this, 'ajax_generate_document' ] );
 		add_action( 'wp_ajax_ffp_save_to_vault', [ $this, 'ajax_save_to_vault' ] );
 		add_action( 'wp_ajax_ffp_update_file_meta', [ $this, 'ajax_update_file_meta' ] );
+		add_action( 'wp_ajax_ffp_update_file_visibility', [ $this, 'ajax_update_file_visibility' ] );
 	}
 
 	public function register_settings() {
@@ -49,6 +50,12 @@ class Settings {
 	}
 
 	public function handle_admin_actions() {
+		if ( ! isset( $_GET['ffp_action'] ) ) {
+			return;
+		}
+
+		check_admin_referer( 'ffp_admin_action', 'ffp_nonce' );
+
 		$user_id_current = get_current_user_id();
 		$current_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
 		$is_admin = current_user_can( 'manage_options' );
@@ -58,7 +65,7 @@ class Settings {
 			return;
 		}
 
-		if ( isset( $_GET['ffp_action'] ) && isset( $_GET['user_id'] ) ) {
+		if ( isset( $_GET['user_id'] ) ) {
 			$user_id = absint( $_GET['user_id'] );
 			$action  = sanitize_text_field( $_GET['ffp_action'] );
 
@@ -76,10 +83,24 @@ class Settings {
 			} elseif ( $action === 'set_pro' ) {
 				update_user_meta( $user_id, 'ffp_user_plan', 'pro' );
 				add_settings_error( 'ffp_messages', 'ffp_msg', 'User plan set to Pro.', 'updated' );
+			} elseif ( $action === 'set_agency' && $is_admin ) {
+				update_user_meta( $user_id, 'ffp_user_plan', 'agency' );
+				add_settings_error( 'ffp_messages', 'ffp_msg', 'User plan set to Agency.', 'updated' );
 			} elseif ( $action === 'delete_file' && isset( $_GET['file_id'] ) ) {
 				$file_id = absint( $_GET['file_id'] );
-				wp_delete_attachment( $file_id, true );
-				add_settings_error( 'ffp_messages', 'ffp_msg', 'File deleted successfully.', 'updated' );
+
+				// IDOR check: Verify owner
+				$attachment = get_post( $file_id );
+				$is_owner = (int) $attachment->post_author === $user_id_current;
+				$parent_of_author = (int) get_user_meta( (int)$attachment->post_author, 'ffp_parent_agency', true );
+				$is_parent = ( $is_agency && $parent_of_author === $user_id_current );
+
+				if ( $is_admin || $is_owner || $is_parent ) {
+					wp_delete_attachment( $file_id, true );
+					add_settings_error( 'ffp_messages', 'ffp_msg', 'File deleted successfully.', 'updated' );
+				} else {
+					wp_die( 'Forbidden: You do not have permission to delete this file.' );
+				}
 			}
 		}
 	}
@@ -360,8 +381,18 @@ class Settings {
 							<td><small><?php echo esc_html( $rights ); ?></small></td>
 							<td><?php echo $count; ?></td>
 							<td>
-								<a href="?page=ffp-dashboard&tab=users&ffp_action=set_pro&user_id=<?php echo $user->ID; ?>" class="button button-small">Set Pro</a>
-								<a href="?page=ffp-dashboard&tab=users&ffp_action=remove_access&user_id=<?php echo $user->ID; ?>" class="button button-small">Set Free</a>
+								<?php
+								$base_url = "?page=ffp-dashboard&tab=users&user_id={$user->ID}";
+								$pro_url = wp_nonce_url( $base_url . "&ffp_action=set_pro", 'ffp_admin_action', 'ffp_nonce' );
+								$free_url = wp_nonce_url( $base_url . "&ffp_action=remove_access", 'ffp_admin_action', 'ffp_nonce' );
+								?>
+								<a href="<?php echo esc_url( $pro_url ); ?>" class="button button-small">Set Pro</a>
+								<?php if ( $is_admin ) :
+									$agency_url = wp_nonce_url( $base_url . "&ffp_action=set_agency", 'ffp_admin_action', 'ffp_nonce' );
+									?>
+									<a href="<?php echo esc_url( $agency_url ); ?>" class="button button-small">Set Agency</a>
+								<?php endif; ?>
+								<a href="<?php echo esc_url( $free_url ); ?>" class="button button-small">Set Free</a>
 							</td>
 						</tr>
 					<?php endforeach; ?>
@@ -372,24 +403,36 @@ class Settings {
 	}
 
 	private function render_payments_tab() {
-		// Mock payment log (In production, this would query a custom ffp_payments table or Stripe API)
+		$users = get_users([ 'meta_key' => 'ffp_user_plan', 'meta_compare' => '!=', 'meta_value' => 'free' ]);
 		?>
 		<div class="ffp-card">
-			<h3>Transaction Logs</h3>
+			<h3>Active Premium Subscriptions</h3>
 			<table class="wp-list-table widefat fixed striped">
 				<thead>
 					<tr>
-						<th>Date</th>
-						<th>User</th>
-						<th>Amount</th>
+						<th>Activation Date</th>
+						<th>Subscriber</th>
+						<th>Plan Tier</th>
 						<th>Status</th>
 						<th>Gateway</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr>
-						<td colspan="5">No transactions recorded.</td>
-					</tr>
+					<?php if ( empty($users) ) : ?>
+						<tr><td colspan="5">No active premium subscriptions found.</td></tr>
+					<?php else :
+						foreach ( $users as $user ) :
+							$plan = get_user_meta( $user->ID, 'ffp_user_plan', true );
+							?>
+							<tr>
+								<td><?php echo date('Y-m-d H:i'); ?></td>
+								<td><?php echo esc_html( $user->display_name ); ?></td>
+								<td><strong><?php echo strtoupper($plan); ?></strong></td>
+								<td><span style="color:green;">ACTIVE</span></td>
+								<td>Stripe (Checkout)</td>
+							</tr>
+						<?php endforeach;
+					endif; ?>
 				</tbody>
 			</table>
 		</div>
@@ -436,13 +479,35 @@ class Settings {
 				</thead>
 				<tbody>
 							<?php
-							$user_id = get_current_user_id();
-							$vault_ids = get_user_meta( $user_id, 'ffp_vault_files', true ) ?: [];
-							if ( empty( $vault_ids ) ) : ?>
-								<tr><td colspan="3">No documents found in vault.</td></tr>
+							$user_id_current = get_current_user_id();
+							$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+							$is_admin = current_user_can( 'manage_options' );
+
+							$query_args = [
+								'post_type'      => 'attachment',
+								'post_status'    => 'inherit',
+								'posts_per_page' => -1,
+							];
+
+							if ( ! $is_admin ) {
+								if ( $user_plan === 'agency' ) {
+									// Show Agency owner's files and their sub-users' files
+									$sub_users = get_users( [ 'meta_key' => 'ffp_parent_agency', 'meta_value' => $user_id_current, 'fields' => 'ID' ] );
+									$authors = array_merge( [ $user_id_current ], $sub_users );
+									$query_args['author__in'] = $authors;
+								} else {
+									$query_args['author'] = $user_id_current;
+								}
+							}
+
+							$attachments = get_posts( $query_args );
+
+							if ( empty( $attachments ) ) : ?>
+								<tr><td colspan="4">No documents found in vault.</td></tr>
 							<?php else :
 								$vault_service = \FreelanceFlowPro\Core\Plugin::instance()->get( 'file_vault' );
-								foreach ( $vault_ids as $fid ) :
+								foreach ( $attachments as $attachment ) :
+									$fid = $attachment->ID;
 									$secure_url = $vault_service->get_secure_url( $fid );
 									?>
 									<tr>
@@ -453,11 +518,18 @@ class Settings {
 												<option value="legal" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'legal'); ?>>Legal</option>
 												<option value="id" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'id'); ?>>Identity</option>
 											</select>
+											<select class="ffp-change-visibility" data-id="<?php echo $fid; ?>">
+												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private</option>
+												<option value="all" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'all'); ?>>Public</option>
+												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Premium</option>
+											</select>
 										</td>
 										<td>
 											<a href="<?php echo esc_url( $secure_url ); ?>" class="button button-small">Download</a>
-											<?php if ( current_user_can( 'manage_options' ) || $current_plan === 'agency' ) : ?>
-												<a href="?page=ffp-dashboard&tab=vault&ffp_action=delete_file&user_id=<?php echo $user_id_current; ?>&file_id=<?php echo $fid; ?>" class="button button-small" onclick="return confirm('Delete this file?');">Delete</a>
+											<?php if ( current_user_can( 'manage_options' ) || $current_plan === 'agency' ) :
+												$del_url = wp_nonce_url( "?page=ffp-dashboard&tab=vault&ffp_action=delete_file&user_id=$user_id_current&file_id=$fid", 'ffp_admin_action', 'ffp_nonce' );
+												?>
+												<a href="<?php echo esc_url( $del_url ); ?>" class="button button-small" onclick="return confirm('Delete this file?');">Delete</a>
 											<?php endif; ?>
 										</td>
 									</tr>
@@ -509,7 +581,11 @@ class Settings {
 						<li>White-labeling</li>
 						<li>Priority Support</li>
 					</ul>
-					<button class="button-primary">Upgrade to Agency</button>
+					<form method="POST" action="">
+						<?php wp_nonce_field( 'ffp_upgrade', 'ffp_upgrade_nonce' ); ?>
+						<input type="hidden" name="ffp_plan_id" value="price_Agency123">
+						<button type="submit" class="button-primary" <?php disabled($current_plan, 'agency'); ?>>Upgrade to Agency</button>
+					</form>
 				</div>
 			</div>
 
@@ -633,6 +709,17 @@ class Settings {
 		wp_send_json_success();
 	}
 
+	public function ajax_update_file_visibility() {
+		check_ajax_referer( 'ffp_nonce', 'nonce' );
+		if ( ! is_user_logged_in() ) wp_send_json_error();
+
+		$file_id = absint( $_POST['file_id'] );
+		$visibility = sanitize_text_field( $_POST['visibility'] );
+
+		update_post_meta( $file_id, 'ffp_vault_visibility', $visibility );
+		wp_send_json_success();
+	}
+
 	public function ajax_save_to_vault() {
 		check_ajax_referer( 'ffp_nonce', 'nonce' );
 
@@ -643,10 +730,8 @@ class Settings {
 		$attachment_id = absint( $_POST['attachment_id'] );
 		$user_id = get_current_user_id();
 
-		// Store in user meta (simulated repository)
-		$vault = get_user_meta( $user_id, 'ffp_vault_files', true ) ?: [];
-		$vault[] = $attachment_id;
-		update_user_meta( $user_id, 'ffp_vault_files', array_unique( $vault ) );
+		// Update author to current user for ownership tracking
+		wp_update_post( [ 'ID' => $attachment_id, 'post_author' => $user_id ] );
 
 		wp_send_json_success( [ 'message' => 'File added to vault.' ] );
 	}

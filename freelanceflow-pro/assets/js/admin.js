@@ -130,6 +130,26 @@
             frame.open();
         });
 
+        // Change File Visibility
+        $(document).on('change', '.ffp-change-visibility', function() {
+            const fileId = $(this).data('id');
+            const visibility = $(this).val();
+
+            $.ajax({
+                url: ffpData.ajax_url,
+                method: 'POST',
+                data: {
+                    action: 'ffp_update_file_visibility',
+                    nonce: ffpData.nonce,
+                    file_id: fileId,
+                    visibility: visibility
+                },
+                success: function() {
+                    console.log('Visibility updated.');
+                }
+            });
+        });
+
         // Change File Category
         $(document).on('change', '.ffp-change-cat', function() {
             const fileId = $(this).data('id');

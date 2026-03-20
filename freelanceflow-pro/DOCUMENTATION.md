@@ -30,6 +30,7 @@ High-converting document automation and secure repository for Virtual Assistants
 - **Dashboard Access:** Global Master Access.
 - **Rights:**
   - Full Gateway Config (Stripe/PayPal).
+  - **Manage Subscriptions:** Can manually promote users to Pro or Agency status.
   - Manage ALL users across all agencies.
   - View global Transaction Logs.
   - Global File Vault management (Categories, Visibility).
