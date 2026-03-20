@@ -9,6 +9,7 @@
         }
     },
     "require": {
-        "dompdf/dompdf": "^2.0"
+        "dompdf/dompdf": "^2.0",
+        "stripe/stripe-php": "^10.0"
     }
 }

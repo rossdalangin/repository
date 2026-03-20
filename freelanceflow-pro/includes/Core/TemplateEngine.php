@@ -39,6 +39,18 @@ class TemplateEngine {
 			case 'textarea':
 				$output .= sprintf( '<textarea id="%s" class="ffp-field"></textarea>', esc_attr( $field['id'] ) );
 				break;
+			case 'repeater':
+				$output .= $this->render_repeater( $field );
+				break;
+			case 'select':
+				$output .= sprintf( '<select id="%s" class="ffp-field">', esc_attr( $field['id'] ) );
+				if ( isset( $field['options'] ) ) {
+					foreach ( $field['options'] as $val => $lbl ) {
+						$output .= sprintf( '<option value="%s">%s</option>', esc_attr( $val ), esc_html( $lbl ) );
+					}
+				}
+				$output .= '</select>';
+				break;
 			default:
 				$output .= sprintf( '<input type="text" id="%s" class="ffp-field" />', esc_attr( $field['id'] ) );
 		}
@@ -58,9 +70,27 @@ class TemplateEngine {
 		return $output;
 	}
 
+	private function render_repeater( $field ) {
+		$html = sprintf( '<div id="%s" class="ffp-repeater ffp-field" data-id="%s">', esc_attr( $field['id'] ), esc_attr( $field['id'] ) );
+		$html .= '<div class="ffp-repeater-rows"></div>';
+		$html .= sprintf( '<button type="button" class="button ffp-add-row" data-repeater="%s">Add Row</button>', esc_attr( $field['id'] ) );
+		$html .= '</div>';
+		return $html;
+	}
+
 	public function parse_template_content( $content, $data ) {
 		foreach ( $data as $key => $value ) {
-			$content = str_replace( '{{' . $key . '}}', $value, $content );
+			if ( is_array( $value ) ) {
+				// Handle repeater parsing (basic list generation)
+				$list = '<ul>';
+				foreach ( $value as $item ) {
+					$list .= '<li>' . esc_html( is_array( $item ) ? implode( ' - ', $item ) : $item ) . '</li>';
+				}
+				$list .= '</ul>';
+				$content = str_replace( '{{' . $key . '}}', $list, $content );
+			} else {
+				$content = str_replace( '{{' . $key . '}}', $value, $content );
+			}
 		}
 		return $content;
 	}

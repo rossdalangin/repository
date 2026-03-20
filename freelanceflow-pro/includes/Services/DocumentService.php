@@ -37,10 +37,14 @@ class DocumentService {
 	}
 
 	public function parse_template( $template_body, $placeholders ) {
-		$parsed = $template_body;
-		foreach ( $placeholders as $key => $value ) {
-			$parsed = str_replace( '{{' . $key . '}}', esc_html( $value ), $parsed );
-		}
+		$plugin = \FreelanceFlowPro\Core\Plugin::instance();
+		$engine = $plugin->get( 'template_engine' );
+
+		// Inject Branding Data
+		$placeholders['business_name'] = get_option( 'ffp_business_name', 'FreelanceFlow User' );
+		$placeholders['business_logo'] = get_option( 'ffp_logo_url', '' );
+
+		$parsed = $engine->parse_template_content( $template_body, $placeholders );
 
 		/**
 		 * Hook: ffp_before_generate

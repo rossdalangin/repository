@@ -3,6 +3,24 @@
 
     $(document).ready(function() {
 
+        // Handle Repeater Rows
+        $(document).on('click', '.ffp-add-row', function(e) {
+            e.preventDefault();
+            const repeaterId = $(this).data('repeater');
+            const $rows = $(`#${repeaterId} .ffp-repeater-rows`);
+            $rows.append(`
+                <div class="ffp-row">
+                    <input type="text" class="ffp-row-input" placeholder="Value">
+                    <button class="ffp-remove-row">×</button>
+                </div>
+            `);
+        });
+
+        $(document).on('click', '.ffp-remove-row', function(e) {
+            e.preventDefault();
+            $(this).parent().remove();
+        });
+
         // Handle Template Selection
         $('.ffp-tpl-select').on('click', function(e) {
             e.preventDefault();
@@ -26,7 +44,16 @@
             const formData = {};
 
             $('.ffp-field').each(function() {
-                formData[$(this).attr('id')] = $(this).val();
+                const id = $(this).attr('id');
+                if ($(this).hasClass('ffp-repeater')) {
+                    const rows = [];
+                    $(this).find('.ffp-row-input').each(function() {
+                        rows.push([$(this).val()]);
+                    });
+                    formData[id] = rows;
+                } else {
+                    formData[id] = $(this).val();
+                }
             });
 
             generateDocument(templateId, format, formData);
@@ -55,16 +82,20 @@
         }
 
         function generateDocument(templateId, format, data) {
-            // Document generation usually opens a new window/tab for the file stream
-            const query = $.param({
-                action: 'ffp_generate_document',
-                nonce: ffpData.nonce,
-                template_id: templateId,
-                format: format,
-                payload: JSON.stringify(data)
+            // Use a hidden form to send data via POST (avoiding URL length limits)
+            const $form = $('<form>', {
+                action: ffpData.ajax_url,
+                method: 'POST',
+                target: '_blank'
             });
 
-            window.open(`${ffpData.ajax_url}?${query}`, '_blank');
+            $form.append($('<input>', { type: 'hidden', name: 'action', value: 'ffp_generate_document' }));
+            $form.append($('<input>', { type: 'hidden', name: 'nonce', value: ffpData.nonce }));
+            $form.append($('<input>', { type: 'hidden', name: 'template_id', value: templateId }));
+            $form.append($('<input>', { type: 'hidden', name: 'format', value: format }));
+            $form.append($('<input>', { type: 'hidden', name: 'payload', value: JSON.stringify(data) }));
+
+            $form.appendTo('body').submit().remove();
         }
 
         // WP Media Uploader for Vault
@@ -78,8 +109,22 @@
 
             frame.on('select', function() {
                 const attachment = frame.state().get('selection').first().toJSON();
-                console.log('File uploaded to vault:', attachment.url);
-                // Add logic to save attachment ID to custom table / user meta
+
+                $.ajax({
+                    url: ffpData.ajax_url,
+                    method: 'POST',
+                    data: {
+                        action: 'ffp_save_to_vault',
+                        nonce: ffpData.nonce,
+                        attachment_id: attachment.id
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('File added to your secure vault!');
+                            location.reload();
+                        }
+                    }
+                });
             });
 
             frame.open();

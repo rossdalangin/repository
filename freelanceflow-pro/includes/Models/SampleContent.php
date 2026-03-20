@@ -19,6 +19,8 @@ class SampleContent {
 				'fields'      => [
 					'client_name'   => [ 'label' => 'Client Name', 'sample' => 'Stark Industries', 'note' => 'Legal Entity Name' ],
 					'project_scope' => [ 'label' => 'Project Scope', 'sample' => 'Integration of Arc Reactor with WordPress.', 'note' => 'Brief scope description' ],
+					'contract_type' => [ 'label' => 'Contract Type', 'type' => 'select', 'options' => [ 'fixed' => 'Fixed Price', 'hourly' => 'Hourly Rate' ], 'sample' => 'fixed' ],
+					'milestones'    => [ 'label' => 'Milestones', 'type' => 'repeater', 'note' => 'List of project milestones' ],
 					'payment_terms' => [ 'label' => 'Payment Terms', 'sample' => '50% Upfront, 50% on completion.', 'note' => 'Terms of payment' ],
 				]
 			],

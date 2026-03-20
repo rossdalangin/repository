@@ -40,6 +40,21 @@
 .ffp-price-card.active {
     border-color: #2271b1;
     box-shadow: 0 0 0 2px #2271b1;
+    position: relative;
+}
+
+.ffp-price-card.active::before {
+    content: "Current Plan";
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2271b1;
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
 }
 
 .ffp-price-card h4 {
@@ -142,4 +157,34 @@
 .ffp-load-sample:hover {
     background: #2271b1;
     color: #fff;
+}
+
+.ffp-repeater-rows {
+    margin-bottom: 10px;
+}
+
+.ffp-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+    align-items: center;
+}
+
+.ffp-row-input {
+    flex-grow: 1;
+}
+
+.ffp-remove-row {
+    background: #dc2626;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.ffp-remove-row:hover {
+    background: #991b1b;
 }

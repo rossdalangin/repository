@@ -12,10 +12,58 @@ class Settings {
 	public function __construct() {
 		add_action( 'admin_menu', [ $this, 'add_menu_pages' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'admin_init', [ $this, 'register_settings' ] );
+		add_action( 'admin_init', [ $this, 'handle_profile_save' ] );
+		add_action( 'admin_init', [ $this, 'handle_subscription_upgrade' ] );
 
 		// AJAX Handlers
 		add_action( 'wp_ajax_ffp_get_template_fields', [ $this, 'ajax_get_template_fields' ] );
 		add_action( 'wp_ajax_ffp_generate_document', [ $this, 'ajax_generate_document' ] );
+		add_action( 'wp_ajax_ffp_save_to_vault', [ $this, 'ajax_save_to_vault' ] );
+	}
+
+	public function register_settings() {
+		register_setting( 'ffp_payment_settings', 'ffp_stripe_secret_key' );
+		register_setting( 'ffp_payment_settings', 'ffp_stripe_webhook_secret' );
+		register_setting( 'ffp_payment_settings', 'ffp_paypal_client_id' );
+	}
+
+	public function handle_profile_save() {
+		if ( ! isset( $_POST['ffp_profile_save_nonce'] ) || ! wp_verify_nonce( $_POST['ffp_profile_save_nonce'], 'ffp_profile_save' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		update_option( 'ffp_business_name', sanitize_text_field( $_POST['ffp_business_name'] ) );
+		update_option( 'ffp_logo_url', esc_url_raw( $_POST['ffp_logo_url'] ) );
+
+		add_settings_error( 'ffp_messages', 'ffp_message', 'Branding saved successfully.', 'updated' );
+	}
+
+	public function handle_subscription_upgrade() {
+		if ( ! isset( $_POST['ffp_upgrade_nonce'] ) || ! wp_verify_nonce( $_POST['ffp_upgrade_nonce'], 'ffp_upgrade' ) ) {
+			return;
+		}
+
+		$plan_id = sanitize_text_field( $_POST['ffp_plan_id'] );
+		$user_id = get_current_user_id();
+		$plugin  = \FreelanceFlowPro\Core\Plugin::instance();
+		$stripe  = $plugin->get( 'stripe' );
+
+		if ( ! $stripe ) {
+			wp_die( 'Stripe service not configured.' );
+		}
+
+		$session = $stripe->create_checkout_session( $plan_id, $user_id );
+		if ( $session && isset( $session->url ) ) {
+			wp_redirect( $session->url );
+			exit;
+		}
+
+		wp_die( 'Failed to initiate Stripe session.' );
 	}
 
 	public function add_menu_pages() {
@@ -45,6 +93,7 @@ class Settings {
 	}
 
 	public function render_dashboard() {
+		settings_errors( 'ffp_messages' );
 		$tabs = [
 			'profile'      => 'Profile & Branding',
 			'generator'    => 'Template Generator',
@@ -94,7 +143,7 @@ class Settings {
 		<div class="ffp-card">
 			<h3>User Profile & Branding</h3>
 			<form method="post" action="">
-				<?php wp_nonce_field( 'ffp_profile_save' ); ?>
+				<?php wp_nonce_field( 'ffp_profile_save', 'ffp_profile_save_nonce' ); ?>
 				<table class="form-table">
 					<tr>
 						<th>Business Name</th>
@@ -144,14 +193,27 @@ class Settings {
 					<tr>
 						<th>File Name</th>
 						<th>Category</th>
-						<th>Status</th>
 						<th>Actions</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr>
-						<td colspan="4">No documents found in vault.</td>
-					</tr>
+							<?php
+							$user_id = get_current_user_id();
+							$vault_ids = get_user_meta( $user_id, 'ffp_vault_files', true ) ?: [];
+							if ( empty( $vault_ids ) ) : ?>
+								<tr><td colspan="3">No documents found in vault.</td></tr>
+							<?php else :
+								$vault_service = \FreelanceFlowPro\Core\Plugin::instance()->get( 'file_vault' );
+								foreach ( $vault_ids as $fid ) :
+									$secure_url = $vault_service->get_secure_url( $fid );
+									?>
+									<tr>
+										<td><?php echo esc_html( get_the_title( $fid ) ); ?></td>
+										<td>Uncategorized</td>
+										<td><a href="<?php echo esc_url( $secure_url ); ?>" class="button button-small">Download Securely</a></td>
+									</tr>
+								<?php endforeach;
+							endif; ?>
 				</tbody>
 			</table>
 		</div>
@@ -184,7 +246,11 @@ class Settings {
 						<li>Custom Branding</li>
 						<li>PDF & DOCX Export</li>
 					</ul>
-					<button class="button-primary">Upgrade to Pro</button>
+					<form method="POST" action="">
+						<?php wp_nonce_field( 'ffp_upgrade', 'ffp_upgrade_nonce' ); ?>
+						<input type="hidden" name="ffp_plan_id" value="price_H5ggu9GWU123"> <!-- Example Stripe Price ID -->
+						<button type="submit" class="button-primary" <?php disabled($current_plan, 'pro'); ?>>Upgrade to Pro</button>
+					</form>
 				</div>
 				<div class="ffp-price-card <?php echo $current_plan === 'agency' ? 'active' : ''; ?>">
 					<h4>Agency</h4>
@@ -197,6 +263,29 @@ class Settings {
 					<button class="button-primary">Upgrade to Agency</button>
 				</div>
 			</div>
+
+			<hr style="margin: 40px 0;">
+
+			<h3>Payment Gateway Configuration</h3>
+			<form method="post" action="options.php">
+				<?php settings_fields( 'ffp_payment_settings' ); ?>
+				<?php do_settings_sections( 'ffp-dashboard-payments' ); ?>
+				<table class="form-table">
+					<tr>
+						<th scope="row">Stripe Secret Key</th>
+						<td><input type="password" name="ffp_stripe_secret_key" value="<?php echo esc_attr( get_option( 'ffp_stripe_secret_key' ) ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th scope="row">Stripe Webhook Secret</th>
+						<td><input type="password" name="ffp_stripe_webhook_secret" value="<?php echo esc_attr( get_option( 'ffp_stripe_webhook_secret' ) ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th scope="row">PayPal Client ID</th>
+						<td><input type="text" name="ffp_paypal_client_id" value="<?php echo esc_attr( get_option( 'ffp_paypal_client_id' ) ); ?>" class="regular-text"></td>
+					</tr>
+				</table>
+				<?php submit_button( 'Save Gateway Settings' ); ?>
+			</form>
 		</div>
 		<?php
 	}
@@ -239,8 +328,7 @@ class Settings {
 	}
 
 	public function ajax_generate_document() {
-		// AJAX for GET requests (file download)
-		$nonce = isset( $_GET['nonce'] ) ? $_GET['nonce'] : '';
+		$nonce = isset( $_REQUEST['nonce'] ) ? $_REQUEST['nonce'] : '';
 		if ( ! wp_verify_nonce( $nonce, 'ffp_nonce' ) ) {
 			wp_die( 'Security check failed' );
 		}
@@ -249,9 +337,9 @@ class Settings {
 			wp_die( 'Forbidden' );
 		}
 
-		$template_id = sanitize_text_field( $_GET['template_id'] );
-		$format      = sanitize_text_field( $_GET['format'] );
-		$payload     = json_decode( stripslashes( $_GET['payload'] ), true );
+		$template_id = sanitize_text_field( $_REQUEST['template_id'] );
+		$format      = sanitize_text_field( $_REQUEST['format'] );
+		$payload     = json_decode( stripslashes( $_REQUEST['payload'] ), true );
 
 		$templates = SampleContent::get_templates();
 		if ( ! isset( $templates[ $template_id ] ) ) {
@@ -259,9 +347,22 @@ class Settings {
 		}
 
 		$template = $templates[ $template_id ];
-		$doc_service = \FreelanceFlowPro\Core\Plugin::instance()->get( 'document_service' );
+		$plugin   = \FreelanceFlowPro\Core\Plugin::instance();
 
+		// Enforce plan limits
+		$user_id = get_current_user_id();
+		$current_plan = get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free';
+		$doc_count    = (int) get_user_meta( $user_id, 'ffp_doc_count_' . date('Ym'), true );
+
+		if ( $current_plan === 'free' && $doc_count >= 3 ) {
+			wp_die( 'Free plan limit reached (3 documents/mo). Please upgrade to Pro.' );
+		}
+
+		$doc_service = $plugin->get( 'document_service' );
 		$parsed_content = $doc_service->parse_template( $template['content'], $payload );
+
+		// Increment count
+		update_user_meta( $user_id, 'ffp_doc_count_' . date('Ym'), $doc_count + 1 );
 
 		if ( $format === 'pdf' ) {
 			$doc_service->export_pdf( $parsed_content, $template_id . '.pdf' );
@@ -269,5 +370,23 @@ class Settings {
 			$doc_service->export_docx( $parsed_content, $template_id . '.docx' );
 		}
 		exit;
+	}
+
+	public function ajax_save_to_vault() {
+		check_ajax_referer( 'ffp_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( [ 'message' => 'Forbidden' ] );
+		}
+
+		$attachment_id = absint( $_POST['attachment_id'] );
+		$user_id = get_current_user_id();
+
+		// Store in user meta (simulated repository)
+		$vault = get_user_meta( $user_id, 'ffp_vault_files', true ) ?: [];
+		$vault[] = $attachment_id;
+		update_user_meta( $user_id, 'ffp_vault_files', array_unique( $vault ) );
+
+		wp_send_json_success( [ 'message' => 'File added to vault.' ] );
 	}
 }
