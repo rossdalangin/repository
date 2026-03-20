@@ -41,6 +41,17 @@ High-converting document automation and secure repository for Virtual Assistants
 - `[ffp_pricing]`: Embed the pricing table anywhere.
 - `[ffp_file_list category="legal"]`: List secure files by category.
 
+## 4. Professional Template Library
+FreelanceFlow Pro includes high-value templates optimized for business growth:
+- **Service Agreements:** Comprehensive contracts with milestone support.
+- **Invoice Generator:** Itemized billing with repeater row support.
+- **VA Proposals:** Structured to showcase value and close deals.
+- **SOPs:** Standardize your operations for team scaling.
+- **Case Studies:** Transform past wins into future sales.
+- **ROI Reports:** Prove your financial impact to clients.
+- **Status Reports:** Maintain high retention with weekly updates.
+- **SOW & Retainers:** Clear project boundaries and ongoing support terms.
+
 ## 4. Developer API
 Endpoint: `/wp-json/ffp/v1/templates`
 Webhook: `/wp-json/ffp/v1/webhooks/stripe`
