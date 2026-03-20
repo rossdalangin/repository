@@ -21,12 +21,26 @@ class FileVaultService {
 	}
 
 	public function verify_access( $attachment_id, $token, $uid ) {
-		// Verify the current user is the owner OR has admin rights
-		if ( get_current_user_id() != $uid && ! current_user_can( 'manage_options' ) ) {
-			return false;
+		// Administrators always have access
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
 		}
 
-		// Verify the signed token
+		// Check file-specific visibility meta
+		$visibility = get_post_meta( $attachment_id, 'ffp_vault_visibility', true ) ?: 'all';
+		$plugin     = \FreelanceFlowPro\Core\Plugin::instance();
+
+		if ( $visibility === 'admin' ) {
+			return false; // Only admin, and we already handled admin above
+		}
+
+		if ( in_array( $visibility, [ 'pro', 'agency' ] ) ) {
+			if ( ! $plugin->check_plan_access( $visibility ) ) {
+				return false;
+			}
+		}
+
+		// Verify the signed token for non-admins to prevent hotlinking
 		if ( ! wp_verify_nonce( $token, 'ffp_vault_file_' . $attachment_id ) ) {
 			return false;
 		}

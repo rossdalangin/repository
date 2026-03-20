@@ -8,6 +8,7 @@ use FreelanceFlowPro\Services\DocumentService;
 use FreelanceFlowPro\Services\FileVaultService;
 use FreelanceFlowPro\Services\StripeService;
 use FreelanceFlowPro\Services\PayPalService;
+use FreelanceFlowPro\Core\Shortcodes;
 
 /**
  * Main Initializer (Singleton)
@@ -44,6 +45,7 @@ class App {
 		// Register core services
 		$plugin->set( 'template_engine', new TemplateEngine() );
 		$plugin->set( 'document_service', new DocumentService() );
+		$plugin->set( 'shortcodes', new Shortcodes() );
 		$plugin->set( 'file_vault', new FileVaultService() );
 
 		// Register payment services with configured keys

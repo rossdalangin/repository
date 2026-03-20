@@ -15,6 +15,7 @@ class Settings {
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
 		add_action( 'admin_init', [ $this, 'handle_profile_save' ] );
 		add_action( 'admin_init', [ $this, 'handle_subscription_upgrade' ] );
+		add_action( 'admin_init', [ $this, 'handle_admin_actions' ] );
 
 		// AJAX Handlers
 		add_action( 'wp_ajax_ffp_get_template_fields', [ $this, 'ajax_get_template_fields' ] );
@@ -26,6 +27,7 @@ class Settings {
 		register_setting( 'ffp_payment_settings', 'ffp_stripe_secret_key' );
 		register_setting( 'ffp_payment_settings', 'ffp_stripe_webhook_secret' );
 		register_setting( 'ffp_payment_settings', 'ffp_paypal_client_id' );
+		register_setting( 'ffp_payment_settings', 'ffp_free_limit' );
 	}
 
 	public function handle_profile_save() {
@@ -39,8 +41,28 @@ class Settings {
 
 		update_option( 'ffp_business_name', sanitize_text_field( $_POST['ffp_business_name'] ) );
 		update_option( 'ffp_logo_url', esc_url_raw( $_POST['ffp_logo_url'] ) );
+		update_option( 'ffp_free_limit', (int) $_POST['ffp_free_limit'] );
 
-		add_settings_error( 'ffp_messages', 'ffp_message', 'Branding saved successfully.', 'updated' );
+		add_settings_error( 'ffp_messages', 'ffp_message', 'Branding and Limits saved successfully.', 'updated' );
+	}
+
+	public function handle_admin_actions() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( isset( $_GET['ffp_action'] ) && isset( $_GET['user_id'] ) ) {
+			$user_id = absint( $_GET['user_id'] );
+			$action  = sanitize_text_field( $_GET['ffp_action'] );
+
+			if ( $action === 'remove_access' ) {
+				update_user_meta( $user_id, 'ffp_user_plan', 'free' );
+				add_settings_error( 'ffp_messages', 'ffp_msg', 'User access removed.', 'updated' );
+			} elseif ( $action === 'set_pro' ) {
+				update_user_meta( $user_id, 'ffp_user_plan', 'pro' );
+				add_settings_error( 'ffp_messages', 'ffp_msg', 'User plan set to Pro.', 'updated' );
+			}
+		}
 	}
 
 	public function handle_subscription_upgrade() {
@@ -100,11 +122,20 @@ class Settings {
 			'generator'    => 'Template Generator',
 			'vault'        => 'File Vault',
 			'subscription' => 'Subscription & Payments',
+			'users'        => 'User Management',
+			'payments'     => 'Transaction Logs',
 		];
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'profile';
 		?>
 		<div class="wrap ffp-admin-wrap">
+			<div class="ffp-card" style="border-left: 5px solid #4f46e5; margin-bottom: 30px;">
+				<h3>🚀 Developer Reference: Shortcodes</h3>
+				<p>Use these shortcodes on any page to display your premium features:</p>
+				<code>[ffp_pricing]</code> - Displays the subscription pricing grid.<br>
+				<code>[ffp_file_list category="legal" tier="pro"]</code> - Displays a list of files from a category.
+			</div>
+
 			<div class="ffp-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
 				<div class="ffp-branding">
 					<h1 style="margin:0; background: linear-gradient(90deg, #4f46e5, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 28px;">FreelanceFlow <span style="font-weight: 300;">Pro</span></h1>
@@ -141,6 +172,12 @@ class Settings {
 			case 'vault':
 				$this->render_vault_tab();
 				break;
+			case 'users':
+				$this->render_users_tab();
+				break;
+			case 'payments':
+				$this->render_payments_tab();
+				break;
 			default:
 				$this->render_profile_tab();
 				break;
@@ -163,8 +200,74 @@ class Settings {
 						<td><input type="text" name="ffp_logo_url" value="<?php echo esc_attr( get_option( 'ffp_logo_url' ) ); ?>" class="regular-text" /></td>
 					</tr>
 				</table>
-				<input type="submit" class="button button-primary" value="Save Branding" />
+				<table class="form-table">
+					<tr>
+						<th scope="row">Free User Document Limit</th>
+						<td><input type="number" name="ffp_free_limit" value="<?php echo esc_attr( get_option( 'ffp_free_limit', 3 ) ); ?>" class="small-text"></td>
+					</tr>
+				</table>
+				<input type="submit" class="button button-primary" value="Save Branding & Limits" />
 			</form>
+		</div>
+		<?php
+	}
+
+	private function render_users_tab() {
+		$users = get_users();
+		?>
+		<div class="ffp-card">
+			<h3>User Management</h3>
+			<table class="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th>User</th>
+						<th>Plan</th>
+						<th>Docs This Month</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $users as $user ) :
+						$plan = get_user_meta( $user->ID, 'ffp_user_plan', true ) ?: 'free';
+						$count = get_user_meta( $user->ID, 'ffp_doc_count_' . date('Ym'), true ) ?: 0;
+						?>
+						<tr>
+							<td><?php echo esc_html( $user->display_name ); ?> (<?php echo esc_html( $user->user_email ); ?>)</td>
+							<td><strong><?php echo strtoupper( $plan ); ?></strong></td>
+							<td><?php echo $count; ?></td>
+							<td>
+								<a href="?page=ffp-dashboard&tab=users&ffp_action=set_pro&user_id=<?php echo $user->ID; ?>" class="button button-small">Set Pro</a>
+								<a href="?page=ffp-dashboard&tab=users&ffp_action=remove_access&user_id=<?php echo $user->ID; ?>" class="button button-small">Set Free</a>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php
+	}
+
+	private function render_payments_tab() {
+		// Mock payment log (In production, this would query a custom ffp_payments table or Stripe API)
+		?>
+		<div class="ffp-card">
+			<h3>Transaction Logs</h3>
+			<table class="wp-list-table widefat fixed striped">
+				<thead>
+					<tr>
+						<th>Date</th>
+						<th>User</th>
+						<th>Amount</th>
+						<th>Status</th>
+						<th>Gateway</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td colspan="5">No transactions recorded.</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 		<?php
 	}
@@ -362,9 +465,10 @@ class Settings {
 		$user_id = get_current_user_id();
 		$current_plan = get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free';
 		$doc_count    = (int) get_user_meta( $user_id, 'ffp_doc_count_' . date('Ym'), true );
+		$free_limit   = (int) get_option( 'ffp_free_limit', 3 );
 
-		if ( $current_plan === 'free' && $doc_count >= 3 ) {
-			wp_die( 'Free plan limit reached (3 documents/mo). Please upgrade to Pro.' );
+		if ( ! current_user_can( 'manage_options' ) && $current_plan === 'free' && $doc_count >= $free_limit ) {
+			wp_die( sprintf( 'Free plan limit reached (%d documents/mo). Please upgrade to Pro.', $free_limit ) );
 		}
 
 		$doc_service = $plugin->get( 'document_service' );

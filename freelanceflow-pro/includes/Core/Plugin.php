@@ -35,6 +35,10 @@ class Plugin {
 			return false;
 		}
 
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+
 		$user_plan = get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free';
 
 		$plans = [
