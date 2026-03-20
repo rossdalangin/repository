@@ -32,6 +32,7 @@ class Settings {
 		register_setting( 'ffp_payment_settings', 'ffp_stripe_secret_key' );
 		register_setting( 'ffp_payment_settings', 'ffp_stripe_webhook_secret' );
 		register_setting( 'ffp_payment_settings', 'ffp_paypal_client_id' );
+		register_setting( 'ffp_payment_settings', 'ffp_paypal_client_secret' );
 		register_setting( 'ffp_payment_settings', 'ffp_free_limit' );
 	}
 
@@ -61,6 +62,7 @@ class Settings {
 			update_user_meta( $user_id_current, 'ffp_agency_stripe_key', sanitize_text_field( $_POST['ffp_agency_stripe_key'] ) );
 			update_user_meta( $user_id_current, 'ffp_agency_stripe_secret', sanitize_text_field( $_POST['ffp_agency_stripe_secret'] ) );
 			update_user_meta( $user_id_current, 'ffp_agency_paypal_client_id', sanitize_text_field( $_POST['ffp_agency_paypal_client_id'] ) );
+			update_user_meta( $user_id_current, 'ffp_agency_paypal_client_secret', sanitize_text_field( $_POST['ffp_agency_paypal_client_secret'] ) );
 		}
 
 		add_settings_error( 'ffp_messages', 'ffp_message', 'Profile and Settings saved successfully.', 'updated' );
@@ -411,6 +413,10 @@ class Settings {
 						<th>PayPal Client ID (Agency)</th>
 						<td><input type="text" name="ffp_agency_paypal_client_id" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_paypal_client_id', true ) ); ?>" class="regular-text" /></td>
 					</tr>
+					<tr>
+						<th>PayPal Client Secret (Agency)</th>
+						<td><input type="password" name="ffp_agency_paypal_client_secret" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_paypal_client_secret', true ) ); ?>" class="regular-text" /></td>
+					</tr>
 					<?php endif; ?>
 				</table>
 				<?php if ( $is_admin ) : ?>
@@ -614,26 +620,8 @@ class Settings {
 				<tbody>
 							<?php
 							$user_id_current = get_current_user_id();
-							$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
-							$is_admin = current_user_can( 'manage_options' );
-
-							$query_args = [
-								'post_type'      => 'attachment',
-								'post_status'    => 'inherit',
-								'posts_per_page' => -1,
-							];
-
-							if ( ! $is_admin ) {
-								if ( $user_plan === 'agency' ) {
-									// Show Agency owner's files and their sub-users' files
-									$sub_users = get_users( [ 'meta_key' => 'ffp_parent_agency', 'meta_value' => $user_id_current, 'fields' => 'ID' ] );
-									$authors = array_merge( [ $user_id_current ], $sub_users );
-									$query_args['author__in'] = $authors;
-								} else {
-									$query_args['author'] = $user_id_current;
-								}
-							}
-
+							$vault_service = \FreelanceFlowPro\Core\Plugin::instance()->get( 'file_vault' );
+							$query_args = $vault_service->get_access_query_args( $user_id_current );
 							$attachments = get_posts( $query_args );
 
 							if ( empty( $attachments ) ) : ?>
@@ -749,6 +737,10 @@ class Settings {
 					<tr>
 						<th scope="row">PayPal Client ID</th>
 						<td><input type="text" name="ffp_paypal_client_id" value="<?php echo esc_attr( get_option( 'ffp_paypal_client_id' ) ); ?>" class="regular-text"></td>
+					</tr>
+					<tr>
+						<th scope="row">PayPal Client Secret</th>
+						<td><input type="password" name="ffp_paypal_client_secret" value="<?php echo esc_attr( get_option( 'ffp_paypal_client_secret' ) ); ?>" class="regular-text"></td>
 					</tr>
 				</table>
 				<?php submit_button( 'Save Global Gateway Settings' ); ?>
@@ -894,8 +886,13 @@ class Settings {
 			wp_send_json_error( [ 'message' => 'You cannot add this file to your vault.' ] );
 		}
 
-		// Update author to current user for ownership tracking if it was a re-assigned admin upload
+		// Update author and add helper meta for query filtering
+		$is_admin = current_user_can('manage_options') ? '1' : '0';
+		$parent_id = (int) get_user_meta($user_id, 'ffp_parent_agency', true);
+
 		wp_update_post( [ 'ID' => $attachment_id, 'post_author' => $user_id ] );
+		update_post_meta( $attachment_id, '_ffp_is_admin_file', $is_admin );
+		update_post_meta( $attachment_id, '_ffp_author_parent', $parent_id );
 
 		wp_send_json_success( [ 'message' => 'File added to vault.' ] );
 	}

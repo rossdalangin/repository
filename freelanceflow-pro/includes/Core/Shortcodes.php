@@ -109,17 +109,15 @@ class Shortcodes {
 	public function file_list( $atts ) {
 		$a = shortcode_atts( [
 			'category' => '',
-			'tier'     => 'all'
 		], $atts );
 
-		$query_args = [
-			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
-			'posts_per_page' => -1,
-		];
+		$user_id = get_current_user_id();
+		$plugin = Plugin::instance();
+		$vault_service = $plugin->get( 'file_vault' );
+
+		$query_args = $vault_service->get_access_query_args( $user_id );
 
 		if ( ! empty( $a['category'] ) ) {
-			// In a real system, we'd use a taxonomy. Here we'll use meta.
 			$query_args['meta_query'][] = [
 				'key'   => 'ffp_vault_category',
 				'value' => $a['category']

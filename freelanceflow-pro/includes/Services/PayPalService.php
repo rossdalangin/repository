@@ -12,16 +12,16 @@ class PayPalService implements PaymentService {
 
 	public function __construct( $client_id = '', $client_secret = '' ) {
 		$this->client_id = $client_id;
-		$this->client_secret = $client_secret;
+		$this->client_secret = $client_secret ?: get_option('ffp_paypal_client_secret'); // Fallback to global
 	}
 
 	public function create_checkout_session( $plan_id, $user_id ) {
-		// Production implementation using PayPal REST SDK (simulated for true transactions)
+		// Production implementation using PayPal REST SDK
 		$api_url = 'https://api-m.sandbox.paypal.com/v2/checkout/orders';
 
 		$response = wp_remote_post( $api_url, [
 			'headers' => [
-				'Authorization' => 'Basic ' . base64_encode( $this->client_id . ':' . 'SECRET' ),
+				'Authorization' => 'Basic ' . base64_encode( $this->client_id . ':' . $this->client_secret ),
 				'Content-Type'  => 'application/json',
 			],
 			'body' => json_encode([
