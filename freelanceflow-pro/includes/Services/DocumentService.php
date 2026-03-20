@@ -82,9 +82,8 @@ class DocumentService {
 		if ( $user_plan === 'free' && ! $is_admin ) {
 			$placeholders['business_logo'] = '';
 		} else {
-			$placeholders['business_logo'] = get_option( 'ffp_logo_url', '' );
-			$meta_logo = get_user_meta( $user_id, 'ffp_logo_url', true );
-			if ( $meta_logo ) $placeholders['business_logo'] = $meta_logo;
+			$logo_url = get_user_meta( $user_id, 'ffp_logo_url', true ) ?: get_option( 'ffp_logo_url', '' );
+			$placeholders['business_logo'] = $logo_url ? sprintf('<img src="%s" style="max-height: 60px; width: auto;" />', esc_url($logo_url)) : '';
 		}
 
 		// Specific branding for Agency/Pro if set in meta (optional override)

@@ -8,11 +8,16 @@ namespace FreelanceFlowPro\Models;
 class SampleContent {
 
 	public static function get_templates() {
+		$branding_header = '<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px;">
+								<div>{{business_logo}}</div>
+								<div style="text-align: right; font-weight: bold; font-size: 18px;">{{business_name}}</div>
+							</div>';
+
 		return [
 			'freelance_contract' => [
 				'title'       => 'Professional Freelance Service Agreement',
 				'description' => 'A comprehensive legal contract covering scope, intellectual property, and payment terms.',
-				'content'     => '<h1>Independent Contractor Agreement</h1>
+				'content'     => $branding_header . '<h1>Independent Contractor Agreement</h1>
 								 <p>This Agreement is made as of {{effective_date}} between <strong>{{business_name}}</strong> ("Contractor") and <strong>{{client_name}}</strong> ("Client").</p>
 								 <h2>1. Services</h2>
 								 <p>The Contractor agrees to perform the following services: {{project_scope}}</p>
@@ -40,7 +45,7 @@ class SampleContent {
 			'va_proposal' => [
 				'title'       => 'High-Converting VA Proposal',
 				'description' => 'A structured proposal designed to showcase value and secure new virtual assistant clients.',
-				'content'     => '<h1>Proposal for Administrative Support</h1>
+				'content'     => $branding_header . '<h1>Proposal for Administrative Support</h1>
 								 <p>Prepared for: {{client_name}}</p>
 								 <p><strong>Introduction:</strong> {{intro_text}}</p>
 								 <h2>Proposed Services</h2>
@@ -61,7 +66,7 @@ class SampleContent {
 			'status_report' => [
 				'title'       => 'Weekly Executive Status Report',
 				'description' => 'A professional update report to keep clients informed and show continuous value.',
-				'content'     => '<h1>Weekly Progress Report</h1>
+				'content'     => $branding_header . '<h1>Weekly Progress Report</h1>
 								 <p><strong>Period:</strong> {{start_date}} to {{end_date}}</p>
 								 <h2>Completed Tasks</h2>
 								 {{tasks_completed}}
