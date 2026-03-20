@@ -73,8 +73,19 @@ class DocumentService {
 
 		// Inject Branding Data
 		$user_id = get_current_user_id();
+		$user_plan = get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free';
+		$is_admin = current_user_can( 'manage_options' );
+
 		$placeholders['business_name'] = get_option( 'ffp_business_name', 'FreelanceFlow User' );
-		$placeholders['business_logo'] = get_option( 'ffp_logo_url', '' );
+
+		// Hide logo for free users unless admin
+		if ( $user_plan === 'free' && ! $is_admin ) {
+			$placeholders['business_logo'] = '';
+		} else {
+			$placeholders['business_logo'] = get_option( 'ffp_logo_url', '' );
+			$meta_logo = get_user_meta( $user_id, 'ffp_logo_url', true );
+			if ( $meta_logo ) $placeholders['business_logo'] = $meta_logo;
+		}
 
 		// Specific branding for Agency/Pro if set in meta (optional override)
 		$meta_name = get_user_meta( $user_id, 'ffp_business_name', true );

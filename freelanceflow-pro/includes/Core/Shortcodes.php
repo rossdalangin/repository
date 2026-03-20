@@ -18,6 +18,21 @@ class Shortcodes {
 		$plugin = Plugin::instance();
 		$user_id = get_current_user_id();
 		$current_plan = $user_id ? (get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free') : 'none';
+
+		// Gateway detection
+		$stripe_valid = false;
+		$paypal_valid = false;
+
+		if ( $agency_id > 0 ) {
+			$stripe_valid = ! empty( get_user_meta( $agency_id, 'ffp_agency_stripe_key', true ) );
+			$paypal_valid = ! empty( get_user_meta( $agency_id, 'ffp_agency_paypal_client_id', true ) );
+		} else {
+			$stripe_valid = ! empty( get_option( 'ffp_stripe_secret_key' ) );
+			$paypal_valid = ! empty( get_option( 'ffp_paypal_client_id' ) );
+		}
+
+		$show_selector = ( $stripe_valid && $paypal_valid );
+		$any_valid = ( $stripe_valid || $paypal_valid );
 		?>
 		<div class="ffp-pricing-grid-public">
 			<style>
@@ -41,22 +56,46 @@ class Shortcodes {
 			<div class="ffp-price-card">
 				<h4>Pro</h4>
 				<p class="price">$29 /mo</p>
-				<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
-					<input type="hidden" name="action" value="ffp_external_upgrade">
-					<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
-					<input type="hidden" name="plan_id" value="price_pro">
-					<button type="submit" <?php disabled($current_plan, 'pro'); ?>><?php echo $current_plan === 'pro' ? 'Active' : 'Get Pro'; ?></button>
-				</form>
+				<?php if ( $any_valid ) : ?>
+					<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
+						<input type="hidden" name="action" value="ffp_external_upgrade">
+						<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
+						<input type="hidden" name="plan_id" value="price_pro">
+						<?php if ( $show_selector ) : ?>
+							<select name="gateway" style="margin-bottom: 10px;">
+								<option value="stripe">Card (Stripe)</option>
+								<option value="paypal">PayPal</option>
+							</select>
+						<?php else : ?>
+							<input type="hidden" name="gateway" value="<?php echo $stripe_valid ? 'stripe' : 'paypal'; ?>">
+						<?php endif; ?>
+						<button type="submit" <?php disabled($current_plan, 'pro'); ?>><?php echo $current_plan === 'pro' ? 'Active' : 'Get Pro'; ?></button>
+					</form>
+				<?php else: ?>
+					<p style="color:red; font-size:11px;">Payment unavailable.</p>
+				<?php endif; ?>
 			</div>
 			<div class="ffp-price-card">
 				<h4>Agency</h4>
 				<p class="price">$99 /mo</p>
-				<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
-					<input type="hidden" name="action" value="ffp_external_upgrade">
-					<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
-					<input type="hidden" name="plan_id" value="price_agency">
-					<button type="submit" <?php disabled($current_plan, 'agency'); ?>><?php echo $current_plan === 'agency' ? 'Active' : 'Get Agency'; ?></button>
-				</form>
+				<?php if ( $any_valid ) : ?>
+					<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
+						<input type="hidden" name="action" value="ffp_external_upgrade">
+						<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
+						<input type="hidden" name="plan_id" value="price_agency">
+						<?php if ( $show_selector ) : ?>
+							<select name="gateway" style="margin-bottom: 10px;">
+								<option value="stripe">Card (Stripe)</option>
+								<option value="paypal">PayPal</option>
+							</select>
+						<?php else : ?>
+							<input type="hidden" name="gateway" value="<?php echo $stripe_valid ? 'stripe' : 'paypal'; ?>">
+						<?php endif; ?>
+						<button type="submit" <?php disabled($current_plan, 'agency'); ?>><?php echo $current_plan === 'agency' ? 'Active' : 'Get Agency'; ?></button>
+					</form>
+				<?php else: ?>
+					<p style="color:red; font-size:11px;">Payment unavailable.</p>
+				<?php endif; ?>
 			</div>
 		</div>
 		<?php

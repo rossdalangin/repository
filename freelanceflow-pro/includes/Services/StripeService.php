@@ -30,12 +30,16 @@ class StripeService implements PaymentService {
 			'metadata'             => array_merge( [ 'user_id' => $user_id ], $meta ),
 		];
 
-		if ( $plan_id !== 'free' ) {
-			$session_args['line_items'] = [ [
-				'price'    => $plan_id,
-				'quantity' => 1,
-			] ];
+		if ( $plan_id === 'free' ) {
+			// Stripe doesn't support $0 subscriptions via Checkout easily without a product
+			// We redirect back with a success flag for free users
+			return (object) [ 'url' => admin_url('admin.php?page=ffp-dashboard&status=free_success') ];
 		}
+
+		$session_args['line_items'] = [ [
+			'price'    => $plan_id,
+			'quantity' => 1,
+		] ];
 
 		return \Stripe\Checkout\Session::create( $session_args );
 	}

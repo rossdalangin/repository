@@ -29,9 +29,16 @@ class FileVaultService {
 		// Check file-specific visibility meta
 		$visibility = get_post_meta( $attachment_id, 'ffp_vault_visibility', true ) ?: 'all';
 		$plugin     = \FreelanceFlowPro\Core\Plugin::instance();
+		$user_id    = get_current_user_id();
 
 		if ( $visibility === 'admin' ) {
-			return false; // Only admin, and we already handled admin above
+			// Only the uploader can see Private/Admin files
+			return (int) get_post_field('post_author', $attachment_id) === $user_id;
+		}
+
+		if ( $visibility === 'all' ) {
+			// Public files accessible to all logged in users (Free/Pro/Agency)
+			return is_user_logged_in();
 		}
 
 		if ( in_array( $visibility, [ 'pro', 'agency' ] ) ) {

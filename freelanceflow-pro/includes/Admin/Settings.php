@@ -60,6 +60,7 @@ class Settings {
 		if ( $user_plan === 'agency' ) {
 			update_user_meta( $user_id_current, 'ffp_agency_stripe_key', sanitize_text_field( $_POST['ffp_agency_stripe_key'] ) );
 			update_user_meta( $user_id_current, 'ffp_agency_stripe_secret', sanitize_text_field( $_POST['ffp_agency_stripe_secret'] ) );
+			update_user_meta( $user_id_current, 'ffp_agency_paypal_client_id', sanitize_text_field( $_POST['ffp_agency_paypal_client_id'] ) );
 		}
 
 		add_settings_error( 'ffp_messages', 'ffp_message', 'Profile and Settings saved successfully.', 'updated' );
@@ -159,6 +160,7 @@ class Settings {
 	public function handle_external_upgrade() {
 		$agency_id = isset( $_POST['agency_id'] ) ? absint( $_POST['agency_id'] ) : 0;
 		$plan_id   = sanitize_text_field( $_POST['plan_id'] );
+		$gateway   = sanitize_text_field( $_POST['gateway'] ?? 'stripe' );
 		$user_id   = get_current_user_id();
 
 		// Handle Free Plan immediately for logged in users
@@ -180,24 +182,27 @@ class Settings {
 			$stripe_key = get_option( 'ffp_stripe_secret_key' );
 		}
 
-		$stripe = new \FreelanceFlowPro\Services\StripeService( $stripe_key );
+		if ( $gateway === 'stripe' ) {
+			$stripe = new \FreelanceFlowPro\Services\StripeService( $stripe_key );
 
-		// For guests, we pass metadata to the webhook to create the user
-		$meta = [
-			'plan_id'   => $plan_id,
-			'agency_id' => $agency_id
-		];
-		if ( $user_id ) {
-			$meta['user_id'] = $user_id;
+			$meta = [ 'plan_id' => $plan_id, 'agency_id' => $agency_id ];
+			if ( $user_id ) $meta['user_id'] = $user_id;
+			else $meta['is_guest'] = '1';
+
+			$session = $stripe->create_checkout_session( $plan_id, $user_id ?: 0, $meta );
+			if ( $session && isset( $session->url ) ) {
+				wp_redirect( $session->url );
+				exit;
+			}
 		} else {
-			$meta['is_guest'] = '1';
-		}
-
-		$session = $stripe->create_checkout_session( $plan_id, $user_id ?: 0, $meta );
-
-		if ( $session && isset( $session->url ) ) {
-			wp_redirect( $session->url );
-			exit;
+			// PayPal Logic
+			$paypal_id = $agency_id > 0 ? get_user_meta($agency_id, 'ffp_agency_paypal_client_id', true) : get_option('ffp_paypal_client_id');
+			$paypal = new \FreelanceFlowPro\Services\PayPalService( $paypal_id );
+			$order = $paypal->create_checkout_session( $plan_id, $user_id ?: 0 );
+			if ( isset($order['approve_url']) ) {
+				wp_redirect( $order['approve_url'] );
+				exit;
+			}
 		}
 
 		wp_die( 'Payment initialization failed.' );
@@ -397,6 +402,10 @@ class Settings {
 					<tr>
 						<th>Stripe Webhook Secret (Agency)</th>
 						<td><input type="password" name="ffp_agency_stripe_secret" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_stripe_secret', true ) ); ?>" class="regular-text" /></td>
+					</tr>
+					<tr>
+						<th>PayPal Client ID (Agency)</th>
+						<td><input type="text" name="ffp_agency_paypal_client_id" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_paypal_client_id', true ) ); ?>" class="regular-text" /></td>
 					</tr>
 					<?php endif; ?>
 				</table>
@@ -625,9 +634,10 @@ class Settings {
 												<option value="id" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'id'); ?>>Identity</option>
 											</select>
 											<select class="ffp-change-visibility" data-id="<?php echo $fid; ?>">
-												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private</option>
-												<option value="all" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'all'); ?>>Public</option>
-												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Premium</option>
+												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private (Me Only)</option>
+												<option value="all" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'all'); ?>>Public (Free+)</option>
+												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Premium (Pro+)</option>
+												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'agency'); ?>>Agency Only</option>
 											</select>
 										</td>
 										<td>
@@ -853,7 +863,14 @@ class Settings {
 		$attachment_id = absint( $_POST['attachment_id'] );
 		$user_id = get_current_user_id();
 
-		// Update author to current user for ownership tracking
+		// Security: Check if the user is the one who actually uploaded this file (WP default behavior for new uploads)
+		// Or if user has admin rights.
+		$attachment = get_post( $attachment_id );
+		if ( ! current_user_can('manage_options') && (int)$attachment->post_author !== $user_id ) {
+			wp_send_json_error( [ 'message' => 'You cannot add this file to your vault.' ] );
+		}
+
+		// Update author to current user for ownership tracking if it was a re-assigned admin upload
 		wp_update_post( [ 'ID' => $attachment_id, 'post_author' => $user_id ] );
 
 		wp_send_json_success( [ 'message' => 'File added to vault.' ] );
