@@ -55,9 +55,16 @@ class StripeService implements PaymentService {
 		switch ( $event->type ) {
 			case 'checkout.session.completed':
 				$session = $event->data->object;
-				$user_id = $session->metadata->user_id;
-				// Update user meta based on the purchased product
-				update_user_meta( $user_id, 'ffp_user_plan', 'pro' );
+				$user_id = (int) $session->metadata->user_id;
+				$price_id = $session->line_items->data[0]->price->id ?? '';
+
+				// Map price IDs to plan types
+				$plan = 'pro';
+				if ( strpos( $price_id, 'agency' ) !== false ) {
+					$plan = 'agency';
+				}
+
+				update_user_meta( $user_id, 'ffp_user_plan', $plan );
 				break;
 		}
 

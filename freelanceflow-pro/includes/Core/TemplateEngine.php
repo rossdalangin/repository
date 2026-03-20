@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace FreelanceFlowPro\Core;
 
@@ -7,7 +8,7 @@ namespace FreelanceFlowPro\Core;
  */
 class TemplateEngine {
 
-	public function get_template_fields( $template_id ) {
+	public function get_template_fields( string $template_id ): array {
 		// Mocked JSON schema retrieval
 		$templates = [
 			'contract' => [
@@ -31,7 +32,7 @@ class TemplateEngine {
 		return isset( $templates[ $template_id ] ) ? $templates[ $template_id ] : [];
 	}
 
-	public function render_field( $field ) {
+	public function render_field( array $field ): string {
 		$output = '<div class="ffp-field-group">';
 		$output .= sprintf( '<label>%s</label>', esc_html( $field['label'] ) );
 
@@ -70,7 +71,7 @@ class TemplateEngine {
 		return $output;
 	}
 
-	private function render_repeater( $field ) {
+	private function render_repeater( array $field ): string {
 		$html = sprintf( '<div id="%s" class="ffp-repeater ffp-field" data-id="%s">', esc_attr( $field['id'] ), esc_attr( $field['id'] ) );
 		$html .= '<div class="ffp-repeater-rows"></div>';
 		$html .= sprintf( '<button type="button" class="button ffp-add-row" data-repeater="%s">Add Row</button>', esc_attr( $field['id'] ) );
@@ -78,7 +79,7 @@ class TemplateEngine {
 		return $html;
 	}
 
-	public function parse_template_content( $content, $data ) {
+	public function parse_template_content( string $content, array $data ): string {
 		foreach ( $data as $key => $value ) {
 			if ( is_array( $value ) ) {
 				// Handle repeater parsing (basic list generation)

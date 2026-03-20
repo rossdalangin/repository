@@ -83,6 +83,7 @@ class Settings {
 			return;
 		}
 
+		wp_enqueue_media();
 		wp_enqueue_style( 'ffp-admin-css', FFP_ASSETS . 'css/admin.css', [], FFP_VERSION );
 		wp_enqueue_script( 'ffp-admin-js', FFP_ASSETS . 'js/admin.js', [ 'jquery' ], FFP_VERSION, true );
 
@@ -104,7 +105,15 @@ class Settings {
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'profile';
 		?>
 		<div class="wrap ffp-admin-wrap">
-			<h1>FreelanceFlow Pro Dashboard</h1>
+			<div class="ffp-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+				<div class="ffp-branding">
+					<h1 style="margin:0; background: linear-gradient(90deg, #4f46e5, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 28px;">FreelanceFlow <span style="font-weight: 300;">Pro</span></h1>
+					<p style="margin:0; color: #718096; font-size: 13px;">Enterprise-grade Document Automation</p>
+				</div>
+				<div class="ffp-status-badge" style="background: #eef2ff; color: #4f46e5; padding: 6px 15px; border-radius: 20px; font-weight: 700; font-size: 11px; border: 1px solid #c7d2fe;">
+					SYSTEM OPERATIONAL
+				</div>
+			</div>
 
 			<h2 class="nav-tab-wrapper">
 				<?php foreach ( $tabs as $id => $label ) : ?>

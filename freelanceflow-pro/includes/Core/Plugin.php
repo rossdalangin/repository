@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace FreelanceFlowPro\Core;
 
@@ -17,18 +18,18 @@ class Plugin {
 		return self::$instance;
 	}
 
-	public function set( $id, $service ) {
+	public function set( string $id, $service ): void {
 		$this->services[ $id ] = $service;
 	}
 
-	public function get( $id ) {
-		return isset( $this->services[ $id ] ) ? $this->services[ $id ] : null;
+	public function get( string $id ) {
+		return $this->services[ $id ] ?? null;
 	}
 
 	/**
 	 * Middleware-style function for access control
 	 */
-	public function check_plan_access( $required_plan = 'pro' ) {
+	public function check_plan_access( string $required_plan = 'pro' ): bool {
 		$user_id = get_current_user_id();
 		if ( ! $user_id ) {
 			return false;
