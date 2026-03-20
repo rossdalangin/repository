@@ -1,0 +1,14 @@
+{
+    "name": "freelanceflow/pro",
+    "description": "High-converting document automation + repository system for freelancers.",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0-or-later",
+    "autoload": {
+        "psr-4": {
+            "FreelanceFlowPro\\": "includes/"
+        }
+    },
+    "require": {
+        "dompdf/dompdf": "^2.0"
+    }
+}

@@ -1,0 +1,50 @@
+<?php
+
+namespace FreelanceFlowPro\Core;
+
+/**
+ * Service Container / Plugin Registry
+ */
+class Plugin {
+
+	private static $instance = null;
+	private $services = [];
+
+	public static function instance() {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	public function set( $id, $service ) {
+		$this->services[ $id ] = $service;
+	}
+
+	public function get( $id ) {
+		return isset( $this->services[ $id ] ) ? $this->services[ $id ] : null;
+	}
+
+	/**
+	 * Middleware-style function for access control
+	 */
+	public function check_plan_access( $required_plan = 'pro' ) {
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		$user_plan = get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free';
+
+		$plans = [
+			'free'   => 0,
+			'pro'    => 1,
+			'agency' => 2,
+		];
+
+		$user_level = isset( $plans[ $user_plan ] ) ? $plans[ $user_plan ] : 0;
+		$required_level = isset( $plans[ $required_plan ] ) ? $plans[ $required_plan ] : 0;
+
+		return $user_level >= $required_level;
+	}
+}

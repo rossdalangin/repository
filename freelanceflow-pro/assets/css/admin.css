@@ -1,0 +1,145 @@
+.ffp-admin-wrap {
+    margin: 20px 20px 0 2px;
+}
+
+.ffp-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 24px;
+    margin-top: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 4px;
+}
+
+.ffp-card h3 {
+    margin-top: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e1e1e;
+    border-bottom: 1px solid #f0f0f1;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+/* Pricing Grid */
+.ffp-pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.ffp-price-card {
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    border-radius: 8px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ffp-price-card.active {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 2px #2271b1;
+}
+
+.ffp-price-card h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #4a5568;
+}
+
+.ffp-price-card p {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 10px 0;
+    color: #1a202c;
+}
+
+.ffp-price-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.ffp-price-card ul li {
+    padding-bottom: 10px;
+    color: #718096;
+    border-bottom: 1px solid #edf2f7;
+    margin-bottom: 10px;
+}
+
+/* Generator Layout */
+.ffp-generator-layout {
+    display: flex;
+    gap: 30px;
+}
+
+.ffp-sidebar {
+    width: 250px;
+    border-right: 1px solid #f0f0f1;
+    padding-right: 20px;
+}
+
+.ffp-sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.ffp-sidebar ul li {
+    margin-bottom: 10px;
+}
+
+.ffp-tpl-select {
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.ffp-tpl-select:hover {
+    background: #e2e8f0;
+}
+
+.ffp-main-form {
+    flex-grow: 1;
+}
+
+.ffp-field-group {
+    margin-bottom: 20px;
+}
+
+.ffp-field-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.ffp-field-group input,
+.ffp-field-group textarea {
+    width: 100%;
+    max-width: 500px;
+    padding: 8px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.ffp-load-sample {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #2271b1;
+    background: none;
+    border: 1px solid #2271b1;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.ffp-load-sample:hover {
+    background: #2271b1;
+    color: #fff;
+}

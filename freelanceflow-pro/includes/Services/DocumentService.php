@@ -1,0 +1,55 @@
+<?php
+
+namespace FreelanceFlowPro\Services;
+
+/**
+ * One-Click Document Generator
+ */
+class DocumentService {
+
+	public function export_pdf( $html, $filename = 'document.pdf' ) {
+		// Ensure Dompdf is loaded via composer autoloader
+		if ( ! class_exists( '\Dompdf\Dompdf' ) ) {
+			return false;
+		}
+
+		$dompdf = new \Dompdf\Dompdf();
+		$dompdf->loadHtml( $html );
+		$dompdf->setPaper( 'A4', 'portrait' );
+		$dompdf->render();
+
+		// Output the generated PDF to Browser
+		$dompdf->stream( $filename );
+		return true;
+	}
+
+	public function export_docx( $content, $filename = 'document.docx' ) {
+		// Basic DOCX generation logic (often requires PHPWord, but we'll provide a placeholder or basic header)
+		header( "Content-type: application/vnd.ms-word" );
+		header( "Content-Disposition: attachment;Filename=" . $filename );
+		echo "<html>";
+		echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=Windows-1252\">";
+		echo "<body>";
+		echo $content;
+		echo "</body>";
+		echo "</html>";
+		exit;
+	}
+
+	public function parse_template( $template_body, $placeholders ) {
+		$parsed = $template_body;
+		foreach ( $placeholders as $key => $value ) {
+			$parsed = str_replace( '{{' . $key . '}}', esc_html( $value ), $parsed );
+		}
+
+		/**
+		 * Hook: ffp_before_generate
+		 */
+		do_action( 'ffp_before_generate', $parsed, $placeholders );
+
+		/**
+		 * Filter: ffp_template_data
+		 */
+		return apply_filters( 'ffp_template_data', $parsed, $placeholders );
+	}
+}
