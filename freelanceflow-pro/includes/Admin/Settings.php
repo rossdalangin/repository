@@ -383,6 +383,10 @@ class Settings {
 		?>
 		<div class="ffp-card">
 			<h3>User Profile & Branding</h3>
+			<div class="ffp-help-text">
+				Welcome to your Profile Command Center. Here you can configure your professional identity which is automatically injected into every document you generate.
+				<strong>Pro and Agency</strong> users can upload a custom logo for premium branding.
+			</div>
 			<form method="post" action="">
 				<?php wp_nonce_field( 'ffp_profile_save', 'ffp_profile_save_nonce' ); ?>
 				<table class="form-table">
@@ -428,6 +432,10 @@ class Settings {
 		?>
 		<div class="ffp-card">
 			<h3>Create New Sub-User</h3>
+			<div class="ffp-help-text">
+				<strong>Agency Feature:</strong> Build your team by creating sub-users. You can assign them to Free or Pro tiers.
+				All documents created by your sub-users will be visible in your Agency management dashboard.
+			</div>
 			<form method="POST" action="">
 				<?php wp_nonce_field( 'ffp_create_subuser', 'ffp_subuser_nonce' ); ?>
 				<table class="form-table">
@@ -522,6 +530,9 @@ class Settings {
 		?>
 		<div class="ffp-card">
 			<h3>Active Premium Subscriptions</h3>
+			<div class="ffp-help-text">
+				<strong>Admin Overview:</strong> Track all active paid subscriptions across your platform. This log provides a real-time snapshot of your SaaS revenue and user tiers.
+			</div>
 			<table class="wp-list-table widefat fixed striped">
 				<thead>
 					<tr>
@@ -559,6 +570,10 @@ class Settings {
 		?>
 		<div class="ffp-card">
 			<h3>Document Template Generator</h3>
+			<div class="ffp-help-text">
+				Generate professional business documents in seconds. Select a template from the sidebar, fill in the dynamic fields, and click generate.
+				<strong>Tip:</strong> Use the "Load Sample" buttons to see high-converting examples for each field.
+			</div>
 			<div class="ffp-generator-layout">
 				<div class="ffp-sidebar">
 					<h4>Select Template</h4>
@@ -582,6 +597,10 @@ class Settings {
 		?>
 		<div class="ffp-card">
 			<h3>File Vault (Secure Repository)</h3>
+			<div class="ffp-help-text">
+				Securely store and manage your legal and identity documents. Files are protected via signed URLs to prevent unauthorized access.
+				<strong>Visibility:</strong> Private (You only), Public (All users), Premium (Pro tiers), or Agency (Your team).
+			</div>
 			<p>Securely store and manage your legal, identity, and portfolio documents.</p>
 			<button class="button ffp-upload-file">Upload New Document</button>
 			<table class="wp-list-table widefat fixed striped">
@@ -663,6 +682,10 @@ class Settings {
 		?>
 		<div class="ffp-card">
 			<h3>Subscription Management</h3>
+			<div class="ffp-help-text">
+				Choose the plan that fits your business scale. Upgrade to unlock unlimited documents, custom branding, and team management tools.
+				Payments are processed securely via Stripe or PayPal.
+			</div>
 			<p>Your current plan: <strong><?php echo esc_html( strtoupper( $current_plan ) ); ?></strong></p>
 
 			<div class="ffp-pricing-grid">

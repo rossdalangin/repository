@@ -1,57 +1,57 @@
-# FreelanceFlow Pro - The Ultimate Guide
+# FreelanceFlow Pro - The Comprehensive Guide
 
-## 1. Introduction
-High-converting document automation and secure repository for Virtual Assistants, Freelancers, and Agencies.
+## 🚀 Quick Start Guide
 
-## 2. User Level Guide & Permissions
+### 1. For Administrators
+- **Setup:** Navigate to **FreelanceFlow -> Subscription & Payments** and enter your Stripe/PayPal keys.
+- **Limits:** Set the global "Free User Document Limit" in the **Profile & Branding** tab.
+- **Monitoring:** Track growth in the **Transaction Logs** tab.
 
-### **Free Tier (The Solopreneur Starter)**
-- **Dashboard Access:** Basic document generator.
-- **Limits:** 3 documents per month.
-- **Templates:** access to "Simple Contract".
-- **Instructions:** Navigate to 'Template Generator', select your template, fill fields, and download PDF.
+### 2. For Agency Owners
+- **Monetization:** Enter your own Stripe/PayPal keys in **Profile & Branding**. This routes team payments to you.
+- **Team Building:** Use **User Management** to create sub-users and assign them to Free or Pro tiers.
+- **Content:** Access and manage all team documents in the **File Vault**.
 
-### **Pro Tier (The Growth Engine)**
-- **Dashboard Access:** Full document generator + Personal File Vault.
-- **Limits:** Unlimited documents.
-- **Features:** Custom Branding (Your Logo/Name on docs), PDF/DOCX export, access to all templates (NDA, Proposals, etc.).
-- **Instructions:** Set your branding in 'Profile & Branding', then use the generator for any professional need.
+### 3. For Freelancers (Pro/Free)
+- **Branding:** Set your business name and logo (Pro only) in **Profile & Branding**.
+- **Automation:** Use the **Template Generator** to create professional PDFs/DOCX files.
 
-### **Agency Tier (The Team Command Center)**
-- **Dashboard Access:** Full Suite + User Management.
-- **Limits:** Unlimited documents for owner and team.
-- **Rights:**
-  - Manage all files created by their sub-users.
-  - **Create Sub-Users:** Can add up to [X] users to their team (Free or Pro tiers).
-  - **Tier Management:** Can upgrade/downgrade their sub-users between Free and Pro.
-  - **Agency Payments:** Can configure their own Stripe keys to receive payments directly from their team or HTML embeds.
-- **Instructions:** Use the 'User Management' tab to invite team members and set their access level. Configure your own Stripe keys in 'Profile & Branding' to enable direct monetization.
+---
 
-### **Administrator (The System Owner)**
-- **Dashboard Access:** Global Master Access.
-- **Rights:**
-  - Full Gateway Config (Stripe/PayPal).
-  - **Manage Subscriptions:** Can manually promote users to Pro or Agency status.
-  - Manage ALL users across all agencies.
-  - View global Transaction Logs.
-  - Global File Vault management (Categories, Visibility).
-- **Instructions:** Use 'Subscription & Payments' to set keys, and 'User Management' for system-wide oversight.
+## 🛠️ Feature Deep-Dive
 
-## 3. Shortcode Reference
-- `[ffp_pricing]`: Embed the pricing table anywhere.
-- `[ffp_file_list category="legal"]`: List secure files by category.
+### Document Template Generator
+- **Professional Content:** Every template (Contract, SOW, ROI Report) comes pre-loaded with high-value content.
+- **Smart Fields:** Use "Load Sample" to see how to fill out complex legal or business fields.
+- **Export:** One-click download as high-quality PDF or editable DOCX.
 
-## 4. Professional Template Library
-FreelanceFlow Pro includes high-value templates optimized for business growth:
-- **Service Agreements:** Comprehensive contracts with milestone support.
-- **Invoice Generator:** Itemized billing with repeater row support.
-- **VA Proposals:** Structured to showcase value and close deals.
-- **SOPs:** Standardize your operations for team scaling.
-- **Case Studies:** Transform past wins into future sales.
-- **ROI Reports:** Prove your financial impact to clients.
-- **Status Reports:** Maintain high retention with weekly updates.
-- **SOW & Retainers:** Clear project boundaries and ongoing support terms.
+### Secure File Vault
+- **Encryption:** All download links are signed and temporary.
+- **Visibility Tiers:**
+  - **Private:** Visible only to you.
+  - **Public:** Accessible to all logged-in users (Free/Pro/Agency).
+  - **Premium:** Accessible only to Pro/Agency tiers.
+  - **Agency Only:** Restricted to your specific team.
 
-## 4. Developer API
-Endpoint: `/wp-json/ffp/v1/templates`
-Webhook: `/wp-json/ffp/v1/webhooks/stripe`
+### Multi-Gateway Payments
+- **Choice:** If configured, customers can choose between Stripe (Card) or PayPal.
+- **Tenant Isolation:** Payments made through an Agency's embed code or team are routed directly to that Agency's account.
+
+---
+
+## 📋 Comprehensive Template Directory
+1.  **Professional Service Agreement:** Comprehensive legal contract.
+2.  **VA Proposal:** High-converting sales document.
+3.  **Itemized Invoice:** Professional billing with repeater support.
+4.  **SOP Generator:** Standardize your operations.
+5.  **ROI Impact Report:** Prove your value to clients.
+6.  **Weekly/Monthly Status Reports:** Maintain high retention.
+7.  **Scope of Work (SOW):** Eliminate scope creep.
+8.  **Cold Outreach Generator:** Scale your client acquisition.
+
+---
+
+## ❓ Troubleshooting & FAQ
+- **PDF not downloading?** Ensure you are running on a server with `allow_url_fopen` enabled and `Dompdf` dependencies installed via Composer.
+- **Branding not showing?** Check that you have saved your settings in the 'Profile & Branding' tab. Free users only display the company name.
+- **Gateway selection missing?** Both Stripe and PayPal credentials must be validly entered to show the choice UI.
