@@ -651,6 +651,7 @@ class Settings {
 												<option value="">Uncategorized</option>
 												<option value="legal" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'legal'); ?>>Legal</option>
 												<option value="id" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'id'); ?>>Identity</option>
+												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'agency'); ?>>Agency</option>
 											</select>
 											<select class="ffp-change-visibility" data-id="<?php echo $fid; ?>">
 												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private (Me Only)</option>

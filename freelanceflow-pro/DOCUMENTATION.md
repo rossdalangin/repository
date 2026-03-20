@@ -28,10 +28,11 @@
 ### Secure File Vault
 - **Encryption:** All download links are signed and temporary.
 - **Visibility Tiers:**
-  - **Private:** Visible only to you.
-  - **Public:** Accessible to all logged-in users (Free/Pro/Agency).
-  - **Premium:** Accessible only to Pro/Agency tiers.
-  - **Agency Only:** Restricted to your specific team.
+  - **Private:** Visible only to the uploader.
+  - **Public:** Accessible to all logged-in users (Free, Pro, Agency).
+  - **Premium:** Restricted to Pro and Agency tiers.
+  - **Agency Only:** Restricted to Agency owners and their sub-users.
+- **Categories:** Files can be categorized (Legal, ID, Agency). The 'Agency' category automatically restricts access to Agency-level users.
 
 ### Multi-Gateway Payments
 - **Choice:** If configured, customers can choose between Stripe (Card) or PayPal.

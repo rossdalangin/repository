@@ -28,23 +28,31 @@ class FileVaultService {
 
 		// Check file-specific visibility meta
 		$visibility = get_post_meta( $attachment_id, 'ffp_vault_visibility', true ) ?: 'all';
+		$category   = get_post_meta( $attachment_id, 'ffp_vault_category', true ) ?: '';
 		$plugin     = \FreelanceFlowPro\Core\Plugin::instance();
 		$user_id    = get_current_user_id();
 
+		// Priority Category Rule: Agency category always restricts to Agency users
+		if ( $category === 'agency' ) {
+			return $plugin->check_plan_access( 'agency' );
+		}
+
 		if ( $visibility === 'admin' ) {
-			// Only the uploader can see Private/Admin files
+			// Private/Admin files: Only the uploader
 			return (int) get_post_field('post_author', $attachment_id) === $user_id;
 		}
 
 		if ( $visibility === 'all' ) {
-			// Public files accessible to all logged in users (Free/Pro/Agency)
+			// Public files: Accessible to all logged-in users
 			return is_user_logged_in();
 		}
 
-		if ( in_array( $visibility, [ 'pro', 'agency' ] ) ) {
-			if ( ! $plugin->check_plan_access( $visibility ) ) {
-				return false;
-			}
+		if ( $visibility === 'agency' ) {
+			return $plugin->check_plan_access( 'agency' );
+		}
+
+		if ( $visibility === 'pro' ) {
+			return $plugin->check_plan_access( 'pro' );
 		}
 
 		// Verify the signed token for non-admins to prevent hotlinking
