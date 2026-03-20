@@ -893,6 +893,7 @@ class Settings {
 		wp_update_post( [ 'ID' => $attachment_id, 'post_author' => $user_id ] );
 		update_post_meta( $attachment_id, '_ffp_is_admin_file', $is_admin );
 		update_post_meta( $attachment_id, '_ffp_author_parent', $parent_id );
+		update_post_meta( $attachment_id, '_ffp_author_id', $user_id );
 
 		wp_send_json_success( [ 'message' => 'File added to vault.' ] );
 	}

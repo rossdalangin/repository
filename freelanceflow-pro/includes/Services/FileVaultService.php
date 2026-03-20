@@ -46,18 +46,15 @@ class FileVaultService {
 		$author_plan = get_user_meta( $author_id, 'ffp_user_plan', true );
 
 		if ( $author_is_admin ) {
-			// Admin Uploaded Rules
+			// Hierarchical Admin Rules: Global assets visible to all relevant tiers
 			if ( $visibility === 'all' ) {
-				// 2. Admin Public -> Only Free users NOT in agency
-				return ( $user_plan === 'free' && $parent_agency === 0 );
+				return is_user_logged_in(); // Everyone logged in
 			}
 			if ( $visibility === 'pro' ) {
-				// 3. Admin Premium -> Only Pro users NOT in agency
-				return ( $user_plan === 'pro' && $parent_agency === 0 );
+				return in_array( $user_plan, [ 'pro', 'agency' ] ); // Pro or Agency
 			}
 			if ( $visibility === 'agency' ) {
-				// 4. Admin Agency -> Only Agency accounts
-				return ( $user_plan === 'agency' );
+				return $user_plan === 'agency'; // Only Agency
 			}
 		} elseif ( $author_plan === 'agency' ) {
 			// Agency Uploaded Rules
@@ -91,23 +88,26 @@ class FileVaultService {
 
 		$meta_query = [ 'relation' => 'OR' ];
 
-		// Admin Files Logic
+		// Hierarchical Admin Files Logic
 		$admin_users = get_users([ 'role' => 'administrator', 'fields' => 'ID' ]);
 		if ( ! empty($admin_users) ) {
-			if ( $user_plan === 'free' && $parent_agency === 0 ) {
-				$meta_query[] = [
-					'relation' => 'AND',
-					[ 'key' => 'ffp_vault_visibility', 'value' => 'all' ],
-					[ 'key' => '_ffp_is_admin_file', 'value' => '1' ] // Helper meta needed
-				];
-			}
-			if ( $user_plan === 'pro' && $parent_agency === 0 ) {
+			// All logged in users see 'all' visibility admin files
+			$meta_query[] = [
+				'relation' => 'AND',
+				[ 'key' => 'ffp_vault_visibility', 'value' => 'all' ],
+				[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
+			];
+
+			// Pro and Agency users see 'pro' visibility admin files
+			if ( in_array( $user_plan, [ 'pro', 'agency' ] ) ) {
 				$meta_query[] = [
 					'relation' => 'AND',
 					[ 'key' => 'ffp_vault_visibility', 'value' => 'pro' ],
 					[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
 				];
 			}
+
+			// Agency users see 'agency' visibility admin files
 			if ( $user_plan === 'agency' ) {
 				$meta_query[] = [
 					'relation' => 'AND',
@@ -143,11 +143,16 @@ class FileVaultService {
 			}
 		}
 
+		// Add own files to the meta query to use OR logic
+		$meta_query[] = [
+			'key'   => '_ffp_author_id', // Add helper meta for own files
+			'value' => $user_id_current
+		];
+
 		return [
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
 			'posts_per_page' => -1,
-			'author'         => $user_id_current, // Own files
 			'meta_query'     => $meta_query
 		];
 	}
