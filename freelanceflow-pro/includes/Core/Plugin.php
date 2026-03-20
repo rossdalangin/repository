@@ -41,6 +41,11 @@ class Plugin {
 
 		$user_plan = get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free';
 
+		// Agency has same access as Pro + extra management rights
+		if ( $user_plan === 'agency' && in_array( $required_plan, [ 'free', 'pro' ] ) ) {
+			return true;
+		}
+
 		$plans = [
 			'free'   => 0,
 			'pro'    => 1,

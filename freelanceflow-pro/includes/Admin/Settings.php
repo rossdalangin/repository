@@ -16,11 +16,13 @@ class Settings {
 		add_action( 'admin_init', [ $this, 'handle_profile_save' ] );
 		add_action( 'admin_init', [ $this, 'handle_subscription_upgrade' ] );
 		add_action( 'admin_init', [ $this, 'handle_admin_actions' ] );
+		add_action( 'admin_init', [ $this, 'handle_create_subuser' ] );
 
 		// AJAX Handlers
 		add_action( 'wp_ajax_ffp_get_template_fields', [ $this, 'ajax_get_template_fields' ] );
 		add_action( 'wp_ajax_ffp_generate_document', [ $this, 'ajax_generate_document' ] );
 		add_action( 'wp_ajax_ffp_save_to_vault', [ $this, 'ajax_save_to_vault' ] );
+		add_action( 'wp_ajax_ffp_update_file_meta', [ $this, 'ajax_update_file_meta' ] );
 	}
 
 	public function register_settings() {
@@ -47,7 +49,12 @@ class Settings {
 	}
 
 	public function handle_admin_actions() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		$user_id_current = get_current_user_id();
+		$current_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+		$is_admin = current_user_can( 'manage_options' );
+		$is_agency = ( $current_plan === 'agency' );
+
+		if ( ! $is_admin && ! $is_agency ) {
 			return;
 		}
 
@@ -55,13 +62,55 @@ class Settings {
 			$user_id = absint( $_GET['user_id'] );
 			$action  = sanitize_text_field( $_GET['ffp_action'] );
 
+			// Multi-tenancy check for Agency
+			if ( $is_agency && ! $is_admin ) {
+				$parent_agency = (int) get_user_meta( $user_id, 'ffp_parent_agency', true );
+				if ( $parent_agency !== $user_id_current ) {
+					wp_die( 'Forbidden: You can only manage your own sub-users.' );
+				}
+			}
+
 			if ( $action === 'remove_access' ) {
 				update_user_meta( $user_id, 'ffp_user_plan', 'free' );
 				add_settings_error( 'ffp_messages', 'ffp_msg', 'User access removed.', 'updated' );
 			} elseif ( $action === 'set_pro' ) {
 				update_user_meta( $user_id, 'ffp_user_plan', 'pro' );
 				add_settings_error( 'ffp_messages', 'ffp_msg', 'User plan set to Pro.', 'updated' );
+			} elseif ( $action === 'delete_file' && isset( $_GET['file_id'] ) ) {
+				$file_id = absint( $_GET['file_id'] );
+				wp_delete_attachment( $file_id, true );
+				add_settings_error( 'ffp_messages', 'ffp_msg', 'File deleted successfully.', 'updated' );
 			}
+		}
+	}
+
+	public function handle_create_subuser() {
+		if ( ! isset( $_POST['ffp_subuser_nonce'] ) || ! wp_verify_nonce( $_POST['ffp_subuser_nonce'], 'ffp_create_subuser' ) ) {
+			return;
+		}
+
+		$user_id_current = get_current_user_id();
+		$current_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+
+		if ( $current_plan !== 'agency' && ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$email = sanitize_email( $_POST['ffp_subuser_email'] );
+		$username = sanitize_user( $_POST['ffp_subuser_username'] );
+		$plan = sanitize_text_field( $_POST['ffp_subuser_plan'] );
+
+		if ( ! email_exists( $email ) && ! username_exists( $username ) ) {
+			$password = wp_generate_password();
+			$subuser_id = wp_create_user( $username, $password, $email );
+
+			if ( ! is_wp_error( $subuser_id ) ) {
+				update_user_meta( $subuser_id, 'ffp_user_plan', $plan );
+				update_user_meta( $subuser_id, 'ffp_parent_agency', $user_id_current );
+				add_settings_error( 'ffp_messages', 'ffp_msg', 'Sub-user created successfully.', 'updated' );
+			}
+		} else {
+			add_settings_error( 'ffp_messages', 'ffp_msg', 'User already exists.', 'error' );
 		}
 	}
 
@@ -92,7 +141,7 @@ class Settings {
 		add_menu_page(
 			'FreelanceFlow Pro',
 			'FreelanceFlow',
-			'manage_options',
+			'read', // Allow any logged in user to see the menu
 			'ffp-dashboard',
 			[ $this, 'render_dashboard' ],
 			'dashicons-media-document',
@@ -162,6 +211,10 @@ class Settings {
 	}
 
 	private function render_tab_content( $tab ) {
+		$is_admin = current_user_can( 'manage_options' );
+		$user_plan = get_user_meta( get_current_user_id(), 'ffp_user_plan', true ) ?: 'free';
+		$is_agency = ( $user_plan === 'agency' );
+
 		switch ( $tab ) {
 			case 'generator':
 				$this->render_generator_tab();
@@ -173,10 +226,18 @@ class Settings {
 				$this->render_vault_tab();
 				break;
 			case 'users':
-				$this->render_users_tab();
+				if ( $is_admin || $is_agency ) {
+					$this->render_users_tab();
+				} else {
+					echo '<div class="notice notice-error"><p>Unauthorized access.</p></div>';
+				}
 				break;
 			case 'payments':
-				$this->render_payments_tab();
+				if ( $is_admin ) {
+					$this->render_payments_tab();
+				} else {
+					echo '<div class="notice notice-error"><p>Unauthorized access.</p></div>';
+				}
 				break;
 			default:
 				$this->render_profile_tab();
@@ -216,24 +277,70 @@ class Settings {
 		$users = get_users();
 		?>
 		<div class="ffp-card">
-			<h3>User Management</h3>
+			<h3>Create New Sub-User</h3>
+			<form method="POST" action="">
+				<?php wp_nonce_field( 'ffp_create_subuser', 'ffp_subuser_nonce' ); ?>
+				<table class="form-table">
+					<tr>
+						<th>Username</th>
+						<td><input type="text" name="ffp_subuser_username" required class="regular-text"></td>
+					</tr>
+					<tr>
+						<th>Email</th>
+						<td><input type="email" name="ffp_subuser_email" required class="regular-text"></td>
+					</tr>
+					<tr>
+						<th>Plan</th>
+						<td>
+							<select name="ffp_subuser_plan">
+								<option value="free">Free</option>
+								<option value="pro">Pro</option>
+							</select>
+						</td>
+					</tr>
+				</table>
+				<input type="submit" class="button button-primary" value="Create Sub-User">
+			</form>
+		</div>
+
+		<div class="ffp-card">
+			<h3>Manage Existing Users</h3>
 			<table class="wp-list-table widefat fixed striped">
 				<thead>
 					<tr>
 						<th>User</th>
 						<th>Plan</th>
-						<th>Docs This Month</th>
+						<th>Access Rights & Capabilities</th>
+						<th>Docs/mo</th>
 						<th>Actions</th>
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $users as $user ) :
+					<?php
+					$user_id_current = get_current_user_id();
+					$is_admin = current_user_can( 'manage_options' );
+
+					foreach ( $users as $user ) :
 						$plan = get_user_meta( $user->ID, 'ffp_user_plan', true ) ?: 'free';
 						$count = get_user_meta( $user->ID, 'ffp_doc_count_' . date('Ym'), true ) ?: 0;
+
+						// Agency filtering
+						if ( ! $is_admin ) {
+							$parent = (int) get_user_meta( $user->ID, 'ffp_parent_agency', true );
+							if ( $parent !== $user_id_current ) continue;
+						}
+
+						$rights = '';
+						switch($plan) {
+							case 'free': $rights = 'Can generate up to 3 docs/mo. Access to basic templates.'; break;
+							case 'pro': $rights = 'Unlimited documents. Access to all templates & PDF/DOCX.'; break;
+							case 'agency': $rights = 'Manage all files/users created by them. Manage sub-users.'; break;
+						}
 						?>
 						<tr>
 							<td><?php echo esc_html( $user->display_name ); ?> (<?php echo esc_html( $user->user_email ); ?>)</td>
 							<td><strong><?php echo strtoupper( $plan ); ?></strong></td>
+							<td><small><?php echo esc_html( $rights ); ?></small></td>
 							<td><?php echo $count; ?></td>
 							<td>
 								<a href="?page=ffp-dashboard&tab=users&ffp_action=set_pro&user_id=<?php echo $user->ID; ?>" class="button button-small">Set Pro</a>
@@ -295,6 +402,8 @@ class Settings {
 	}
 
 	private function render_vault_tab() {
+		$user_id_current = get_current_user_id();
+		$current_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
 		?>
 		<div class="ffp-card">
 			<h3>File Vault (Secure Repository)</h3>
@@ -321,8 +430,19 @@ class Settings {
 									?>
 									<tr>
 										<td><?php echo esc_html( get_the_title( $fid ) ); ?></td>
-										<td>Uncategorized</td>
-										<td><a href="<?php echo esc_url( $secure_url ); ?>" class="button button-small">Download Securely</a></td>
+										<td>
+											<select class="ffp-change-cat" data-id="<?php echo $fid; ?>">
+												<option value="">Uncategorized</option>
+												<option value="legal" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'legal'); ?>>Legal</option>
+												<option value="id" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'id'); ?>>Identity</option>
+											</select>
+										</td>
+										<td>
+											<a href="<?php echo esc_url( $secure_url ); ?>" class="button button-small">Download</a>
+											<?php if ( current_user_can( 'manage_options' ) || $current_plan === 'agency' ) : ?>
+												<a href="?page=ffp-dashboard&tab=vault&ffp_action=delete_file&user_id=<?php echo $user_id_current; ?>&file_id=<?php echo $fid; ?>" class="button button-small" onclick="return confirm('Delete this file?');">Delete</a>
+											<?php endif; ?>
+										</td>
 									</tr>
 								<?php endforeach;
 							endif; ?>
@@ -405,7 +525,7 @@ class Settings {
 	public function ajax_get_template_fields() {
 		check_ajax_referer( 'ffp_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ], 403 );
 		}
 
@@ -445,7 +565,7 @@ class Settings {
 			wp_die( 'Security check failed' );
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! is_user_logged_in() ) {
 			wp_die( 'Forbidden' );
 		}
 
@@ -485,10 +605,21 @@ class Settings {
 		exit;
 	}
 
+	public function ajax_update_file_meta() {
+		check_ajax_referer( 'ffp_nonce', 'nonce' );
+		if ( ! is_user_logged_in() ) wp_send_json_error();
+
+		$file_id = absint( $_POST['file_id'] );
+		$cat = sanitize_text_field( $_POST['category'] );
+
+		update_post_meta( $file_id, 'ffp_vault_category', $cat );
+		wp_send_json_success();
+	}
+
 	public function ajax_save_to_vault() {
 		check_ajax_referer( 'ffp_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! is_user_logged_in() ) {
 			wp_send_json_error( [ 'message' => 'Forbidden' ] );
 		}
 

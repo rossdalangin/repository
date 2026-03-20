@@ -130,6 +130,26 @@
             frame.open();
         });
 
+        // Change File Category
+        $(document).on('change', '.ffp-change-cat', function() {
+            const fileId = $(this).data('id');
+            const cat = $(this).val();
+
+            $.ajax({
+                url: ffpData.ajax_url,
+                method: 'POST',
+                data: {
+                    action: 'ffp_update_file_meta',
+                    nonce: ffpData.nonce,
+                    file_id: fileId,
+                    category: cat
+                },
+                success: function() {
+                    console.log('Category updated.');
+                }
+            });
+        });
+
     });
 
 })(jQuery);

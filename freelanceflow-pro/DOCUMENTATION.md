@@ -1,39 +1,44 @@
-# FreelanceFlow Pro - Documentation
+# FreelanceFlow Pro - The Ultimate Guide
 
 ## 1. Introduction
-FreelanceFlow Pro is an enterprise-grade document automation and secure repository system for Virtual Assistants, Freelancers, and Agencies. It streamlines client onboarding and reporting by generating professional PDF/DOCX documents in seconds.
+High-converting document automation and secure repository for Virtual Assistants, Freelancers, and Agencies.
 
-## 2. Installation
-1. Upload the `freelanceflow-pro` folder to your `/wp-content/plugins/` directory.
-2. Ensure you run `composer install` inside the plugin directory to fetch dependencies (Dompdf, Stripe).
-3. Activate the plugin via the WordPress 'Plugins' menu.
+## 2. User Level Guide & Permissions
 
-## 3. Initial Configuration
-Navigate to **FreelanceFlow** in your WordPress Admin sidebar.
+### **Free Tier (The Solopreneur Starter)**
+- **Dashboard Access:** Basic document generator.
+- **Limits:** 3 documents per month.
+- **Templates:** access to "Simple Contract".
+- **Instructions:** Navigate to 'Template Generator', select your template, fill fields, and download PDF.
 
-### 3.1 Profile & Branding
-Set your business name and logo URL. These will be injected into generated documents for professional branding.
+### **Pro Tier (The Growth Engine)**
+- **Dashboard Access:** Full document generator + Personal File Vault.
+- **Limits:** Unlimited documents.
+- **Features:** Custom Branding (Your Logo/Name on docs), PDF/DOCX export, access to all templates (NDA, Proposals, etc.).
+- **Instructions:** Set your branding in 'Profile & Branding', then use the generator for any professional need.
 
-### 3.2 Subscription & Payments
-- **Stripe:** Enter your Stripe Secret Key and Webhook Secret to enable Pro/Agency subscriptions.
-- **PayPal:** Enter your PayPal Client ID.
-- Access the pricing grid to see available features for each tier.
+### **Agency Tier (The Team Command Center)**
+- **Dashboard Access:** Full Suite + User Management.
+- **Limits:** Unlimited documents for owner and team.
+- **Rights:**
+  - Manage all files created by their sub-users.
+  - **Create Sub-Users:** Can add up to [X] users to their team.
+  - **Tier Management:** Can upgrade/downgrade their sub-users between Free and Pro.
+- **Instructions:** Use the 'User Management' tab to invite team members and set their access level. View 'File Vault' to manage team assets.
 
-## 4. Using the Template Generator
-1. Go to the **Template Generator** tab.
-2. Select a template from the sidebar (e.g., Freelance Contract, VA Proposal).
-3. Fill in the dynamic fields.
-4. Use the **"Load Sample"** buttons to quickly see example data.
-5. Click **"Generate PDF"** or **"Generate DOCX"** to download the finalized document.
+### **Administrator (The System Owner)**
+- **Dashboard Access:** Global Master Access.
+- **Rights:**
+  - Full Gateway Config (Stripe/PayPal).
+  - Manage ALL users across all agencies.
+  - View global Transaction Logs.
+  - Global File Vault management (Categories, Visibility).
+- **Instructions:** Use 'Subscription & Payments' to set keys, and 'User Management' for system-wide oversight.
 
-## 5. File Vault
-- Upload legal documents, identity proofs, or portfolio pieces.
-- Files are protected via signed URLs, ensuring only authorized users can access them.
+## 3. Shortcode Reference
+- `[ffp_pricing]`: Embed the pricing table anywhere.
+- `[ffp_file_list category="legal"]`: List secure files by category.
 
-## 6. Developer Extensibility
-### Hooks
-- `ffp_before_generate`: Runs before document generation.
-- `ffp_template_data`: Filter to modify placeholder data globally.
-
-### REST API
-Endpoint: `/wp-json/ffp/v1/templates` (Requires `manage_options` capability).
+## 4. Developer API
+Endpoint: `/wp-json/ffp/v1/templates`
+Webhook: `/wp-json/ffp/v1/webhooks/stripe`
