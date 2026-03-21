@@ -46,15 +46,17 @@ class FileVaultService {
 		$author_plan = get_user_meta( $author_id, 'ffp_user_plan', true );
 
 		if ( $author_is_admin ) {
-			// Hierarchical Admin Rules: Global assets visible to all relevant tiers
+			// Admin Uploads: Only for users NOT referred by an Agency
+			if ( $parent_agency !== 0 ) return false;
+
 			if ( $visibility === 'all' ) {
-				return is_user_logged_in(); // Everyone logged in
+				return true; // Free/Any direct user
 			}
 			if ( $visibility === 'pro' ) {
-				return in_array( $user_plan, [ 'pro', 'agency' ] ); // Pro or Agency
+				return in_array( $user_plan, [ 'pro', 'agency' ] );
 			}
 			if ( $visibility === 'agency' ) {
-				return $user_plan === 'agency'; // Only Agency
+				return $user_plan === 'agency';
 			}
 		} elseif ( $author_plan === 'agency' ) {
 			// Agency Uploaded Rules
@@ -88,32 +90,34 @@ class FileVaultService {
 
 		$meta_query = [ 'relation' => 'OR' ];
 
-		// Hierarchical Admin Files Logic
-		$admin_users = get_users([ 'role' => 'administrator', 'fields' => 'ID' ]);
-		if ( ! empty($admin_users) ) {
-			// All logged in users see 'all' visibility admin files
-			$meta_query[] = [
-				'relation' => 'AND',
-				[ 'key' => 'ffp_vault_visibility', 'value' => 'all' ],
-				[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
-			];
-
-			// Pro and Agency users see 'pro' visibility admin files
-			if ( in_array( $user_plan, [ 'pro', 'agency' ] ) ) {
+		// Admin Files Logic (Only for direct users)
+		if ( $parent_agency === 0 ) {
+			$admin_users = get_users([ 'role' => 'administrator', 'fields' => 'ID' ]);
+			if ( ! empty($admin_users) ) {
+				// Free direct users see 'all'
 				$meta_query[] = [
 					'relation' => 'AND',
-					[ 'key' => 'ffp_vault_visibility', 'value' => 'pro' ],
+					[ 'key' => 'ffp_vault_visibility', 'value' => 'all' ],
 					[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
 				];
-			}
 
-			// Agency users see 'agency' visibility admin files
-			if ( $user_plan === 'agency' ) {
-				$meta_query[] = [
-					'relation' => 'AND',
-					[ 'key' => 'ffp_vault_visibility', 'value' => 'agency' ],
-					[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
-				];
+				// Pro direct users see 'pro'
+				if ( $user_plan === 'pro' ) {
+					$meta_query[] = [
+						'relation' => 'AND',
+						[ 'key' => 'ffp_vault_visibility', 'value' => 'pro' ],
+						[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
+					];
+				}
+
+				// Agency users see 'agency'
+				if ( $user_plan === 'agency' ) {
+					$meta_query[] = [
+						'relation' => 'AND',
+						[ 'key' => 'ffp_vault_visibility', 'value' => 'agency' ],
+						[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
+					];
+				}
 			}
 		}
 
@@ -122,6 +126,15 @@ class FileVaultService {
 			$meta_query[] = [
 				'key'   => '_ffp_author_parent',
 				'value' => $user_id_current
+			];
+		}
+
+		// Sub-user logic: Also show files where the Parent Agency is the author
+		if ( $parent_agency > 0 ) {
+			$meta_query[] = [
+				'relation' => 'AND',
+				[ 'key' => '_ffp_author_id', 'value' => $parent_agency ],
+				[ 'key' => 'ffp_vault_visibility', 'value' => [ 'all', 'pro', 'agency' ], 'compare' => 'IN' ]
 			];
 		}
 

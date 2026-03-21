@@ -112,8 +112,7 @@ class Shortcodes {
 		], $atts );
 
 		$user_id = get_current_user_id();
-		$plugin = Plugin::instance();
-		$vault_service = $plugin->get( 'file_vault' );
+		$vault_service = Plugin::instance()->get( 'file_vault' );
 
 		$query_args = $vault_service->get_access_query_args( $user_id );
 

@@ -599,13 +599,17 @@ class Settings {
 
 	private function render_vault_tab() {
 		$user_id_current = get_current_user_id();
-		$current_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
+		$is_admin = current_user_can( 'manage_options' );
+
 		?>
 		<div class="ffp-card">
 			<h3>File Vault (Secure Repository)</h3>
 			<div class="ffp-help-text">
 				Securely store and manage your legal and identity documents. Files are protected via signed URLs to prevent unauthorized access.
-				<strong>Visibility:</strong> Private (You only), Public (All users), Premium (Pro tiers), or Agency (Your team).
+				<?php if ( $is_admin || $user_plan === 'agency' ) : ?>
+					<strong>Visibility:</strong> Private (You only), Public (All users), Premium (Pro tiers), or Agency (Your team).
+				<?php endif; ?>
 			</div>
 			<p>Securely store and manage your legal, identity, and portfolio documents.</p>
 			<button class="button ffp-upload-file">Upload New Document</button>
