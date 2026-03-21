@@ -140,6 +140,7 @@ class FileVaultService {
 		return [
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
+			'numberposts'    => -1,
 			'posts_per_page' => -1,
 			'meta_query'     => $meta_query
 		];

@@ -17,6 +17,7 @@ class Settings {
 		add_action( 'admin_init', [ $this, 'handle_subscription_upgrade' ] );
 		add_action( 'admin_init', [ $this, 'handle_admin_actions' ] );
 		add_action( 'admin_init', [ $this, 'handle_create_subuser' ] );
+		add_action( 'admin_init', [ $this, 'sync_vault_metas' ] );
 		add_action( 'admin_post_ffp_external_upgrade', [ $this, 'handle_external_upgrade' ] );
 		add_action( 'admin_post_nopriv_ffp_external_upgrade', [ $this, 'handle_external_upgrade' ] );
 
@@ -120,6 +121,31 @@ class Settings {
 				} else {
 					wp_die( 'Forbidden: You do not have permission to delete this file.' );
 				}
+			}
+		}
+	}
+
+	public function sync_vault_metas() {
+		if ( ! is_admin() ) return;
+
+		$args = [
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'numberposts'    => -1,
+			'meta_query'     => [
+				'relation' => 'OR',
+				[ 'key' => '_ffp_author_id', 'compare' => 'NOT EXISTS' ],
+				[ 'key' => '_ffp_is_admin_file', 'compare' => 'NOT EXISTS' ]
+			]
+		];
+
+		$attachments = get_posts( $args );
+		if ( $attachments ) {
+			foreach ( $attachments as $attachment ) {
+				$author_id = (int) $attachment->post_author;
+				update_post_meta( $attachment->ID, '_ffp_author_id', $author_id );
+				update_post_meta( $attachment->ID, '_ffp_is_admin_file', user_can( $author_id, 'manage_options' ) ? '1' : '0' );
+				update_post_meta( $attachment->ID, '_ffp_author_parent', (int) get_user_meta( $author_id, 'ffp_parent_agency', true ) );
 			}
 		}
 	}
@@ -880,7 +906,7 @@ class Settings {
 
 		update_post_meta( $file_id, 'ffp_vault_visibility', $visibility );
 
-		// Ensure helper metas exist for isolation
+		// IDOR & Access check: Ensure the meta is synced for the query args
 		$author_id = (int) get_post_field('post_author', $file_id);
 		update_post_meta( $file_id, '_ffp_author_id', $author_id );
 		update_post_meta( $file_id, '_ffp_is_admin_file', user_can($author_id, 'manage_options') ? '1' : '0' );
