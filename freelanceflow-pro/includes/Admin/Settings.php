@@ -683,10 +683,10 @@ class Settings {
 												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'agency'); ?>>Agency</option>
 											</select>
 											<select class="ffp-change-visibility" data-id="<?php echo $fid; ?>">
-												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private (Personal)</option>
-												<option value="all" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'all'); ?>>Free Account Only</option>
-												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Pro Account Only</option>
-												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'agency'); ?>>Agency Account Only</option>
+												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private (Uploader Only)</option>
+												<option value="all" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'all'); ?>>Visible to All Tiers (Free/Pro/Agency)</option>
+												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Visible to Pro & Agency</option>
+												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'agency'); ?>>Visible to Agency Only</option>
 											</select>
 											<?php else :
 												$cat = get_post_meta($fid, 'ffp_vault_category', true) ?: 'Uncategorized';

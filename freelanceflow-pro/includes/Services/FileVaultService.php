@@ -64,30 +64,25 @@ class FileVaultService {
 		$author_is_admin = user_can( $author_id, 'manage_options' );
 		$author_plan = get_user_meta( $author_id, 'ffp_user_plan', true );
 
+		// Prepare cumulative access check
+		$is_allowed_visibility = false;
+		if ( $visibility === 'all' ) {
+			$is_allowed_visibility = true; // Everyone can see 'all'
+		} elseif ( $visibility === 'pro' ) {
+			$is_allowed_visibility = in_array( $user_plan, [ 'pro', 'agency' ] );
+		} elseif ( $visibility === 'agency' ) {
+			$is_allowed_visibility = ( $user_plan === 'agency' );
+		}
+
 		if ( $author_is_admin ) {
-			// Admin Uploads: For direct users AND Agency Owners (if tagged Agency)
-			if ( $visibility === 'agency' ) {
-				return ( $user_plan === 'agency' );
-			}
-
-			// For Free/Pro direct users (Agencies are also direct users but handled above)
-			if ( $parent_agency !== 0 ) return false;
-
-			if ( $visibility === 'all' ) {
-				return ( $user_plan === 'free' );
-			}
-			if ( $visibility === 'pro' ) {
-				return ( $user_plan === 'pro' );
+			// Admin Uploads: For direct users (no parent agency) OR Agency Owners
+			if ( $parent_agency === 0 || $user_plan === 'agency' ) {
+				return $is_allowed_visibility;
 			}
 		} elseif ( $author_plan === 'agency' ) {
 			// Agency Owner Uploaded Rules: For their referred users only
-			if ( $parent_agency !== $author_id ) return false;
-
-			if ( $visibility === 'all' ) {
-				return ( $user_plan === 'free' );
-			}
-			if ( $visibility === 'pro' ) {
-				return ( $user_plan === 'pro' );
+			if ( $parent_agency === $author_id ) {
+				return $is_allowed_visibility;
 			}
 		}
 
@@ -112,26 +107,22 @@ class FileVaultService {
 			'type'  => 'NUMERIC'
 		];
 
-		// Define visibility mapping based on user plan (Strict 1:1)
-		$target_visibility = '';
-		if ($user_plan === 'free') $target_visibility = 'all';
-		elseif ($user_plan === 'pro') $target_visibility = 'pro';
-		elseif ($user_plan === 'agency') $target_visibility = 'agency';
+		// Define visibility mapping based on user plan (Cumulative Access)
+		$allowed_visibilities = [ 'all' ];
+		if ( $user_plan === 'pro' ) {
+			$allowed_visibilities[] = 'pro';
+		} elseif ( $user_plan === 'agency' ) {
+			$allowed_visibilities[] = 'pro';
+			$allowed_visibilities[] = 'agency';
+		}
 
 		// 2. Admin Files Rules
-		if ( $user_plan === 'agency' ) {
-			// Agency users see Admin files tagged 'agency'
+		if ( $parent_agency === 0 || $user_plan === 'agency' ) {
+			// Direct users (Free/Pro) or Agency Owners see relevant Admin files
 			$meta_query[] = [
 				'relation' => 'AND',
 				[ 'key' => '_ffp_is_admin_file', 'value' => '1' ],
-				[ 'key' => 'ffp_vault_visibility', 'value' => 'agency' ]
-			];
-		} elseif ( $parent_agency === 0 ) {
-			// Direct Free/Pro users see relevant Admin files
-			$meta_query[] = [
-				'relation' => 'AND',
-				[ 'key' => '_ffp_is_admin_file', 'value' => '1' ],
-				[ 'key' => 'ffp_vault_visibility', 'value' => $target_visibility ]
+				[ 'key' => 'ffp_vault_visibility', 'value' => $allowed_visibilities, 'compare' => 'IN' ]
 			];
 		}
 
@@ -141,7 +132,7 @@ class FileVaultService {
 			$meta_query[] = [
 				'relation' => 'AND',
 				[ 'key' => '_ffp_author_id', 'value' => $parent_agency, 'type' => 'NUMERIC' ],
-				[ 'key' => 'ffp_vault_visibility', 'value' => $target_visibility ]
+				[ 'key' => 'ffp_vault_visibility', 'value' => $allowed_visibilities, 'compare' => 'IN' ]
 			];
 		}
 
