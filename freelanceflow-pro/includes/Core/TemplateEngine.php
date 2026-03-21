@@ -90,7 +90,7 @@ class TemplateEngine {
 				$list .= '</ul>';
 				$content = str_replace( '{{' . $key . '}}', $list, $content );
 			} else {
-				$content = str_replace( '{{' . $key . '}}', $value, $content );
+				$content = str_replace( '{{' . $key . '}}', esc_html((string)$value), $content );
 			}
 		}
 		return $content;

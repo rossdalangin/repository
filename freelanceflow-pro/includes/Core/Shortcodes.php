@@ -75,6 +75,7 @@ class Shortcodes {
 					<p style="color:red; font-size:11px;">Payment unavailable.</p>
 				<?php endif; ?>
 			</div>
+			<?php if ( $agency_id === 0 || user_can( $agency_id, 'manage_options' ) ) : ?>
 			<div class="ffp-price-card">
 				<h4>Agency</h4>
 				<p class="price">$99 /mo</p>
@@ -97,6 +98,7 @@ class Shortcodes {
 					<p style="color:red; font-size:11px;">Payment unavailable.</p>
 				<?php endif; ?>
 			</div>
+			<?php endif; ?>
 		</div>
 		<?php
 		return ob_get_clean();

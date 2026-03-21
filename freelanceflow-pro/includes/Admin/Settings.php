@@ -646,15 +646,15 @@ class Settings {
 												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'agency'); ?>>Agency</option>
 											</select>
 											<select class="ffp-change-visibility" data-id="<?php echo $fid; ?>">
-												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private (Me Only)</option>
-												<option value="all" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'all'); ?>>Public (Free+)</option>
-												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Premium (Pro+)</option>
-												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'agency'); ?>>Agency Only</option>
+												<option value="admin" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'admin'); ?>>Private (Personal)</option>
+												<option value="all" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'all'); ?>>Free Account Only</option>
+												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Pro Account Only</option>
+												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'agency'); ?>>Agency Account Only</option>
 											</select>
 										</td>
 										<td>
 											<a href="<?php echo esc_url( $secure_url ); ?>" class="button button-small">Download</a>
-											<?php if ( current_user_can( 'manage_options' ) || $current_plan === 'agency' ) :
+											<?php if ( current_user_can( 'manage_options' ) || $user_plan === 'agency' ) :
 												$del_url = wp_nonce_url( "?page=ffp-dashboard&tab=vault&ffp_action=delete_file&user_id=$user_id_current&file_id=$fid", 'ffp_admin_action', 'ffp_nonce' );
 												?>
 												<a href="<?php echo esc_url( $del_url ); ?>" class="button button-small" onclick="return confirm('Delete this file?');">Delete</a>
