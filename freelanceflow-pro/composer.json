@@ -1,15 +1,22 @@
 {
     "name": "freelanceflow/pro",
-    "description": "High-converting document automation + repository system for freelancers.",
+    "description": "High-converting document automation + repository system for Virtual Assistants, Freelancers, and Agencies.",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "FreelanceFlow Team"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.4",
+        "dompdf/dompdf": "^2.0",
+        "stripe/stripe-php": "^10.0"
+    },
     "autoload": {
         "psr-4": {
             "FreelanceFlowPro\\": "includes/"
         }
-    },
-    "require": {
-        "dompdf/dompdf": "^2.0",
-        "stripe/stripe-php": "^10.0"
     }
 }

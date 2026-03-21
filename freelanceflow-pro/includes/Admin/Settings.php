@@ -18,6 +18,7 @@ class Settings {
 		add_action( 'admin_init', [ $this, 'handle_admin_actions' ] );
 		add_action( 'admin_init', [ $this, 'handle_create_subuser' ] );
 		add_action( 'admin_init', [ $this, 'sync_vault_metas' ] );
+		add_action( 'add_attachment', [ $this, 'auto_set_file_metas' ] );
 		add_action( 'admin_post_ffp_external_upgrade', [ $this, 'handle_external_upgrade' ] );
 		add_action( 'admin_post_nopriv_ffp_external_upgrade', [ $this, 'handle_external_upgrade' ] );
 
@@ -123,6 +124,13 @@ class Settings {
 				}
 			}
 		}
+	}
+
+	public function auto_set_file_metas( $attachment_id ) {
+		$author_id = (int) get_post_field('post_author', $attachment_id);
+		update_post_meta( $attachment_id, '_ffp_author_id', $author_id );
+		update_post_meta( $attachment_id, '_ffp_is_admin_file', user_can( $author_id, 'manage_options' ) ? '1' : '0' );
+		update_post_meta( $attachment_id, '_ffp_author_parent', (int) get_user_meta( $author_id, 'ffp_parent_agency', true ) );
 	}
 
 	public function sync_vault_metas() {
