@@ -151,7 +151,9 @@ class Settings {
 
 			if ( ! is_wp_error( $subuser_id ) ) {
 				update_user_meta( $subuser_id, 'ffp_user_plan', $plan );
-				update_user_meta( $subuser_id, 'ffp_parent_agency', $user_id_current );
+				if ( ! current_user_can('manage_options') ) {
+					update_user_meta( $subuser_id, 'ffp_parent_agency', $user_id_current );
+				}
 				add_settings_error( 'ffp_messages', 'ffp_msg', 'Sub-user created successfully.', 'updated' );
 			}
 		} else {
@@ -608,7 +610,7 @@ class Settings {
 			<div class="ffp-help-text">
 				Securely store and manage your legal and identity documents. Files are protected via signed URLs to prevent unauthorized access.
 				<?php if ( $is_admin || $user_plan === 'agency' ) : ?>
-					<strong>Visibility:</strong> Private (You only), Public (All users), Premium (Pro tiers), or Agency (Your team).
+					<br><strong>Visibility Controls:</strong> Use the dropdowns below to manage who in your team can see each file.
 				<?php endif; ?>
 			</div>
 			<p>Securely store and manage your legal, identity, and portfolio documents.</p>
@@ -877,6 +879,13 @@ class Settings {
 		$visibility = sanitize_text_field( $_POST['visibility'] );
 
 		update_post_meta( $file_id, 'ffp_vault_visibility', $visibility );
+
+		// Ensure helper metas exist for isolation
+		$author_id = (int) get_post_field('post_author', $file_id);
+		update_post_meta( $file_id, '_ffp_author_id', $author_id );
+		update_post_meta( $file_id, '_ffp_is_admin_file', user_can($author_id, 'manage_options') ? '1' : '0' );
+		update_post_meta( $file_id, '_ffp_author_parent', (int) get_user_meta($author_id, 'ffp_parent_agency', true) );
+
 		wp_send_json_success();
 	}
 
