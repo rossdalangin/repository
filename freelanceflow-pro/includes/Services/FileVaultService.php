@@ -46,18 +46,19 @@ class FileVaultService {
 		$author_plan = get_user_meta( $author_id, 'ffp_user_plan', true );
 
 		if ( $author_is_admin ) {
-			// Admin Uploads: Only for users NOT referred by an Agency
+			// Admin Uploads: For direct users AND Agency Owners (if tagged Agency)
+			if ( $visibility === 'agency' ) {
+				return ( $user_plan === 'agency' );
+			}
+
+			// For Free/Pro direct users
 			if ( $parent_agency !== 0 ) return false;
 
-			// Strict Tier Isolation Rules
 			if ( $visibility === 'all' ) {
 				return ( $user_plan === 'free' );
 			}
 			if ( $visibility === 'pro' ) {
 				return ( $user_plan === 'pro' );
-			}
-			if ( $visibility === 'agency' ) {
-				return ( $user_plan === 'agency' );
 			}
 		} elseif ( $author_plan === 'agency' ) {
 			// Agency Uploaded Rules: For their referred users only
@@ -95,14 +96,14 @@ class FileVaultService {
 			'value' => $user_id_current
 		];
 
-		// Define visibility mapping based on user plan
+		// Define visibility mapping based on user plan (Strict 1:1)
 		$target_visibility = '';
 		if ($user_plan === 'free') $target_visibility = 'all';
 		elseif ($user_plan === 'pro') $target_visibility = 'pro';
 		elseif ($user_plan === 'agency') $target_visibility = 'agency';
 
-		// 2. Direct Users (no agency) see relevant Admin files
-		if ( $parent_agency === 0 && $target_visibility ) {
+		// 2. Direct Users (no agency) see relevant Admin files (Strict)
+		if ( $parent_agency === 0 && in_array($user_plan, ['free', 'pro']) ) {
 			$meta_query[] = [
 				'relation' => 'AND',
 				[ 'key' => '_ffp_is_admin_file', 'value' => '1' ],
@@ -110,7 +111,16 @@ class FileVaultService {
 			];
 		}
 
-		// 3. Referred Users see relevant Agency files
+		// 2.1 Agency Owners see Admin-Agency files
+		if ( $user_plan === 'agency' ) {
+			$meta_query[] = [
+				'relation' => 'AND',
+				[ 'key' => '_ffp_is_admin_file', 'value' => '1' ],
+				[ 'key' => 'ffp_vault_visibility', 'value' => 'agency' ]
+			];
+		}
+
+		// 3. Referred Users see relevant Agency files (Strict)
 		if ( $parent_agency > 0 && $target_visibility ) {
 			$meta_query[] = [
 				'relation' => 'AND',
@@ -119,7 +129,7 @@ class FileVaultService {
 			];
 		}
 
-		// 4. Agency Owners see files belonging to their team
+		// 4. Agency Owners see files belonging to their team (Strict isolation from global unless tagged Agency)
 		if ( $user_plan === 'agency' ) {
 			$meta_query[] = [
 				'key'   => '_ffp_author_parent',
