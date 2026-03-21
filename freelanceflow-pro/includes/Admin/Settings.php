@@ -639,6 +639,7 @@ class Settings {
 									<tr>
 										<td><?php echo esc_html( get_the_title( $fid ) ); ?></td>
 										<td>
+											<?php if ( $is_admin || $user_plan === 'agency' ) : ?>
 											<select class="ffp-change-cat" data-id="<?php echo $fid; ?>">
 												<option value="">Uncategorized</option>
 												<option value="legal" <?php selected(get_post_meta($fid, 'ffp_vault_category', true), 'legal'); ?>>Legal</option>
@@ -651,6 +652,12 @@ class Settings {
 												<option value="pro" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'pro'); ?>>Pro Account Only</option>
 												<option value="agency" <?php selected(get_post_meta($fid, 'ffp_vault_visibility', true), 'agency'); ?>>Agency Account Only</option>
 											</select>
+											<?php else :
+												$cat = get_post_meta($fid, 'ffp_vault_category', true) ?: 'Uncategorized';
+												$vis = get_post_meta($fid, 'ffp_vault_visibility', true) ?: 'admin';
+												echo 'Category: ' . esc_html(strtoupper($cat)) . '<br>';
+												echo 'Visibility: ' . esc_html(strtoupper($vis));
+											endif; ?>
 										</td>
 										<td>
 											<a href="<?php echo esc_url( $secure_url ); ?>" class="button button-small">Download</a>

@@ -15,18 +15,19 @@ FreelanceFlow Pro is an enterprise-grade document automation and secure multi-te
 
 ### 2. Document Template Generator
 **Purpose:** Create professional business docs in seconds.
-- **Templates:** Over 12+ industry-standard templates (Contracts, SOW, ROI, SOPs, Invoices, etc.).
-- **Smart Fields:** Use the "Load Sample" buttons to instantly see high-converting text for every field.
-- **Repeater Support:** Easily add multiple milestones or line items with a single click.
+- **Templates:** Over 12+ high-value templates including Service Agreements, VA Proposals, Invoices, SOPs, and ROI Impact Reports.
+- **Smart Fields:** Use the "Load Sample" buttons to instantly inject industry-standard content and legal phrasing.
+- **Repeater Support:** Dynamic rows for project milestones, itemized billing, or task lists.
 
 ### 3. File Vault (Secure Repository)
-**Purpose:** 100% secure storage for sensitive documents.
-- **Visibility Rules:**
-    - **Private:** Only you (the uploader) can see or download.
-    - **Public:** Any user with a "Free" or higher account can access (useful for global tutorials/guides).
-    - **Premium:** Only "Pro" or "Agency" tiers can access.
-    - **Agency:** Restricted strictly to the Agency Owner and their specific team members.
-- **Security:** All download links are signed, temporary, and cannot be hotlinked.
+**Purpose:** Enterprise-grade security for sensitive documents.
+- **Strict Tier Visibility:**
+    - **Private:** Visible ONLY to the uploader. All Free and Pro user uploads are private by default.
+    - **Free Account Only (Admin/Agency Public):** Files intended specifically for Free users (direct or within an agency).
+    - **Pro Account Only (Admin/Agency Premium):** Premium resources strictly for Pro subscribers.
+    - **Agency Account Only:** High-level strategic documents for Agency owners.
+- **Access Control:** The system automatically segregates global Admin resources from tenant-specific Agency resources. Referred users only see what their Agency provides.
+- **Security:** Every download uses a signed, one-time-use token (`ffp_token`).
 
 ### 4. User Management (Agency/Admin Only)
 **Purpose:** Build and manage your freelance team.

@@ -87,64 +87,45 @@ class FileVaultService {
 			return [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'posts_per_page' => -1 ];
 		}
 
-		// Complex logic to mirror verify_access in a SQL query
-		// 1. Files where user is author
-		// 2. Admin files where visibility matches user criteria
-		// 3. Agency files where visibility matches user criteria AND parent matches
-
 		$meta_query = [ 'relation' => 'OR' ];
 
-		// Admin Files Logic (Strict Tier Mapping for direct users)
-		if ( $parent_agency === 0 ) {
-			$admin_users = get_users([ 'role' => 'administrator', 'fields' => 'ID' ]);
-			if ( ! empty($admin_users) ) {
+		// 1. Always show user's own files
+		$meta_query[] = [
+			'key'   => '_ffp_author_id',
+			'value' => $user_id_current
+		];
 
-				// Map visibility strictly to user plan
-				$target_visibility = '';
-				if ($user_plan === 'free') $target_visibility = 'all';
-				elseif ($user_plan === 'pro') $target_visibility = 'pro';
-				elseif ($user_plan === 'agency') $target_visibility = 'agency';
+		// Define visibility mapping based on user plan
+		$target_visibility = '';
+		if ($user_plan === 'free') $target_visibility = 'all';
+		elseif ($user_plan === 'pro') $target_visibility = 'pro';
+		elseif ($user_plan === 'agency') $target_visibility = 'agency';
 
-				if ( $target_visibility ) {
-					$meta_query[] = [
-						'relation' => 'AND',
-						[ 'key' => 'ffp_vault_visibility', 'value' => $target_visibility ],
-						[ 'key' => '_ffp_is_admin_file', 'value' => '1' ]
-					];
-				}
-			}
+		// 2. Direct Users (no agency) see relevant Admin files
+		if ( $parent_agency === 0 && $target_visibility ) {
+			$meta_query[] = [
+				'relation' => 'AND',
+				[ 'key' => '_ffp_is_admin_file', 'value' => '1' ],
+				[ 'key' => 'ffp_vault_visibility', 'value' => $target_visibility ]
+			];
 		}
 
-		// Agency Owner Files Logic (Viewing their team's files)
+		// 3. Referred Users see relevant Agency files
+		if ( $parent_agency > 0 && $target_visibility ) {
+			$meta_query[] = [
+				'relation' => 'AND',
+				[ 'key' => '_ffp_author_id', 'value' => $parent_agency ],
+				[ 'key' => 'ffp_vault_visibility', 'value' => $target_visibility ]
+			];
+		}
+
+		// 4. Agency Owners see files belonging to their team
 		if ( $user_plan === 'agency' ) {
 			$meta_query[] = [
 				'key'   => '_ffp_author_parent',
 				'value' => $user_id_current
 			];
 		}
-
-		// Sub-user logic: Files where the Parent Agency is the author (Strict Tier Mapping)
-		if ( $parent_agency > 0 ) {
-			$target_visibility = '';
-			if ($user_plan === 'free') $target_visibility = 'all';
-			elseif ($user_plan === 'pro') $target_visibility = 'pro';
-			elseif ($user_plan === 'agency') $target_visibility = 'agency';
-
-			if ( $target_visibility ) {
-				$meta_query[] = [
-					'relation' => 'AND',
-					[ 'key' => '_ffp_author_id', 'value' => $parent_agency ],
-					[ 'key' => 'ffp_vault_visibility', 'value' => $target_visibility ]
-				];
-			}
-		}
-
-
-		// Add own files to the meta query to use OR logic
-		$meta_query[] = [
-			'key'   => '_ffp_author_id', // Add helper meta for own files
-			'value' => $user_id_current
-		];
 
 		return [
 			'post_type'      => 'attachment',
