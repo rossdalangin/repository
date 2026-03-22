@@ -1,0 +1,26 @@
+# Freelance Service Agreement (SAMPLE)
+
+**Contractor:** [Your Business Name]
+**Client:** Global Media Dynamics LLC
+**Date:** 2023-11-01
+
+## 1. Scope of Work
+Development of a multi-tenant SaaS dashboard using React, Node.js, and PostgreSQL. Includes API integration with Stripe and AWS S3, responsive frontend implementation, and full CI/CD deployment pipeline setup.
+
+## 2. Payment Terms
+- Total Amount: USD 12,500.00
+- 50% Upfront Deposit: USD 6,250.00
+- 50% Upon Final Delivery: USD 6,250.00
+
+## 3. Milestones
+- Milestone 1: UI/UX Wireframes & Technical Architecture (2 weeks)
+- Milestone 2: Core Backend API & Database Schema (3 weeks)
+- Milestone 3: Frontend Integration & Beta Testing (3 weeks)
+- Milestone 4: Final Deployment & Documentation (1 week)
+
+## 4. IP Rights
+Upon final payment, all code and assets belong to the Client.
+
+---
+Signed: ____________________ (Contractor)
+Signed: ____________________ (Client)

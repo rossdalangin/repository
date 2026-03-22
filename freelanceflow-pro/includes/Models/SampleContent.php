@@ -32,11 +32,11 @@ class SampleContent {
 								 <br><br>
 								 <p>Signed: ____________________ (Contractor) &nbsp;&nbsp;&nbsp; Signed: ____________________ (Client)</p>',
 				'fields'      => [
-					'effective_date' => [ 'label' => 'Effective Date', 'sample' => date('Y-m-d'), 'note' => 'Format: YYYY-MM-DD (e.g. 2023-10-30)' ],
-					'client_name'    => [ 'label' => 'Client Legal Name', 'sample' => 'Acme Global Inc.', 'note' => 'Full legal name of the entity paying for services.' ],
-					'project_scope'  => [ 'label' => 'Project Scope', 'type' => 'textarea', 'sample' => 'Full-stack development of a React dashboard including API integration and deployment.', 'note' => 'Detailed description of the work deliverables.' ],
-					'currency'       => [ 'label' => 'Currency Symbol', 'sample' => '$', 'note' => 'e.g. $, €, £' ],
-					'total_amount'   => [ 'label' => 'Total Amount', 'sample' => '5,000', 'note' => 'Numeric value of the total project cost.' ],
+					'effective_date' => [ 'label' => 'Effective Date', 'sample' => date('Y-m-d'), 'note' => 'Format: YYYY-MM-DD' ],
+					'client_name'    => [ 'label' => 'Client Legal Name', 'sample' => 'Global Media Dynamics LLC', 'note' => 'Full legal name of the entity paying for services.' ],
+					'project_scope'  => [ 'label' => 'Project Scope', 'type' => 'textarea', 'sample' => 'Development of a multi-tenant SaaS dashboard using React, Node.js, and PostgreSQL. Includes API integration with Stripe and AWS S3, responsive frontend implementation, and full CI/CD deployment pipeline setup.', 'note' => 'Detailed description of the work deliverables.' ],
+					'currency'       => [ 'label' => 'Currency Symbol', 'sample' => 'USD ', 'note' => 'e.g. $, €, £' ],
+					'total_amount'   => [ 'label' => 'Total Amount', 'sample' => '12,500.00', 'note' => 'Numeric value of the total project cost.' ],
 					'payment_terms'  => [ 'label' => 'Payment Terms', 'type' => 'select', 'options' => [ '50_upfront' => '50% Upfront, 50% on Completion', 'net_15' => 'Net 15 Days', 'hourly' => 'Weekly Billing' ], 'sample' => '50_upfront' ],
 					'milestones'     => [ 'label' => 'Project Milestones', 'type' => 'repeater', 'note' => 'Add key phases of the project.' ],
 					'termination_notice' => [ 'label' => 'Notice Period (Days)', 'sample' => '30', 'note' => 'Number of days required for termination.' ],
@@ -54,13 +54,13 @@ class SampleContent {
 								 <p>Monthly Retainer: {{currency}}{{retainer_amount}} for {{hours}} hours/month.</p>
 								 <p><strong>Why choose us?</strong> {{value_prop}}</p>',
 				'fields'      => [
-					'client_name'     => [ 'label' => 'Prospective Client', 'sample' => 'Sarah Johnson, CEO', 'note' => 'Name and title of the decision maker.' ],
-					'intro_text'      => [ 'label' => 'Cover Letter/Intro', 'type' => 'textarea', 'sample' => 'I am thrilled to submit this proposal to streamline your inbox and calendar management...', 'note' => 'Briefly state your understanding of their needs.' ],
-					'services'        => [ 'label' => 'Service List', 'type' => 'repeater', 'note' => 'e.g. Email Management, Travel Booking, Research.' ],
-					'currency'        => [ 'label' => 'Currency', 'sample' => 'USD', 'note' => 'Currency code or symbol.' ],
-					'retainer_amount' => [ 'label' => 'Monthly Investment', 'sample' => '1,200', 'note' => 'Amount for the monthly retainer.' ],
-					'hours'           => [ 'label' => 'Allocated Hours', 'sample' => '20', 'note' => 'Hours included in this tier.' ],
-					'value_prop'      => [ 'label' => 'Value Proposition', 'type' => 'textarea', 'sample' => 'We save our clients an average of 15 hours a week, allowing them to focus on revenue growth.', 'note' => 'What makes you different?' ],
+					'client_name'     => [ 'label' => 'Prospective Client', 'sample' => 'Alexandra Hayes, CEO of Hayes Global', 'note' => 'Name and title of the decision maker.' ],
+					'intro_text'      => [ 'label' => 'Cover Letter/Intro', 'type' => 'textarea', 'sample' => 'After reviewing your recent expansion into the European market, I am thrilled to submit this proposal to streamline your operations. My goal is to reclaim 15 hours of your week by managing high-level administrative bottlenecks.', 'note' => 'Briefly state your understanding of their needs.' ],
+					'services'        => [ 'label' => 'Service List', 'type' => 'repeater', 'note' => 'e.g. Executive Inbox Management, Complex Travel Coordination, Vendor Liaison.' ],
+					'currency'        => [ 'label' => 'Currency', 'sample' => '$', 'note' => 'Currency code or symbol.' ],
+					'retainer_amount' => [ 'label' => 'Monthly Investment', 'sample' => '2,500.00', 'note' => 'Amount for the monthly retainer.' ],
+					'hours'           => [ 'label' => 'Allocated Hours', 'sample' => '40', 'note' => 'Hours included in this tier.' ],
+					'value_prop'      => [ 'label' => 'Value Proposition', 'type' => 'textarea', 'sample' => 'We specialize in executive support for 7-figure agency owners, focusing on radical efficiency and proactive problem solving rather than just reactive task management.', 'note' => 'What makes you different?' ],
 				]
 			],
 			'status_report' => [
@@ -76,12 +76,12 @@ class SampleContent {
 								 <p>{{insights}}</p>
 								 <p>Next Meeting: {{next_meeting}}</p>',
 				'fields'      => [
-					'start_date'      => [ 'label' => 'Start Date', 'sample' => '2023-10-23', 'note' => 'Beginning of the reporting period.' ],
-					'end_date'        => [ 'label' => 'End Date', 'sample' => '2023-10-29', 'note' => 'End of the reporting period.' ],
+					'start_date'      => [ 'label' => 'Start Date', 'sample' => date('Y-m-d', strtotime('last Monday')), 'note' => 'Beginning of the reporting period.' ],
+					'end_date'        => [ 'label' => 'End Date', 'sample' => date('Y-m-d', strtotime('last Sunday')), 'note' => 'End of the reporting period.' ],
 					'tasks_completed' => [ 'label' => 'Done This Week', 'type' => 'repeater', 'note' => 'List your wins for the client.' ],
 					'tasks_pending'   => [ 'label' => 'Next Week Priority', 'type' => 'repeater', 'note' => 'Focus items for the coming period.' ],
-					'insights'        => [ 'label' => 'Insights/Results', 'type' => 'textarea', 'sample' => 'Conversion rates increased by 5% following the landing page optimization.', 'note' => 'High-level value statement.' ],
-					'next_meeting'    => [ 'label' => 'Next Check-in', 'sample' => 'Monday at 10 AM EST', 'note' => 'Confirmation of the next sync.' ],
+					'insights'        => [ 'label' => 'Insights/Results', 'type' => 'textarea', 'sample' => 'The implementation of the automated lead-nurture sequence resulted in a 12% increase in discovery call bookings this week. Total time saved on manual outreach: 5.5 hours.', 'note' => 'High-level value statement.' ],
+					'next_meeting'    => [ 'label' => 'Next Check-in', 'sample' => 'Wednesday at 2 PM PST via Zoom', 'note' => 'Confirmation of the next sync.' ],
 				]
 			],
 			'invoice' => [
@@ -97,14 +97,14 @@ class SampleContent {
 								 <h3 style="text-align:right;">Total Due: {{currency}}{{total_due}}</h3>
 								 <p><strong>Payment Instructions:</strong> {{payment_method}}</p>',
 				'fields'      => [
-					'invoice_number' => [ 'label' => 'Invoice #', 'sample' => 'INV-2023-001' ],
-					'client_name'    => [ 'label' => 'Client Details', 'type' => 'textarea', 'sample' => "John Doe\n123 Street Ave\nNY, 10001" ],
+					'invoice_number' => [ 'label' => 'Invoice #', 'sample' => 'INV-' . date('Y') . '-442' ],
+					'client_name'    => [ 'label' => 'Client Details', 'type' => 'textarea', 'sample' => "Sterling Cooper Advertising\nAttn: Accounts Payable\n1271 Avenue of the Americas\nNew York, NY 10020" ],
 					'invoice_date'   => [ 'label' => 'Invoice Date', 'sample' => date('Y-m-d') ],
-					'due_date'       => [ 'label' => 'Due Date', 'sample' => date('Y-m-d', strtotime('+15 days')) ],
+					'due_date'       => [ 'label' => 'Due Date', 'sample' => date('Y-m-d', strtotime('+14 days')) ],
 					'line_items'     => [ 'label' => 'Line Items', 'type' => 'repeater', 'note' => 'Format: Description - Price' ],
 					'currency'       => [ 'label' => 'Currency', 'sample' => '$' ],
-					'total_due'      => [ 'label' => 'Total Amount', 'sample' => '2,500.00' ],
-					'payment_method' => [ 'label' => 'How to Pay', 'type' => 'textarea', 'sample' => 'Zelle: email@example.com or Wire Transfer.' ],
+					'total_due'      => [ 'label' => 'Total Amount', 'sample' => '3,450.00' ],
+					'payment_method' => [ 'label' => 'How to Pay', 'type' => 'textarea', 'sample' => 'Please settle via Stripe Transfer or Wire to: routing #021000021 acct #992288331. Net 14 terms apply.', 'note' => 'Specific payment instructions.' ],
 				]
 			],
 			'outreach' => [

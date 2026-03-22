@@ -83,7 +83,7 @@ class DocumentService {
 			$placeholders['business_logo'] = '';
 		} else {
 			$logo_url = get_user_meta( $user_id, 'ffp_logo_url', true ) ?: get_option( 'ffp_logo_url', '' );
-			$placeholders['business_logo'] = $logo_url ? sprintf('<img src="%s" style="max-height: 60px; width: auto;" />', esc_url($logo_url)) : '';
+			$placeholders['business_logo'] = $logo_url ? sprintf('<img src="%s" style="max-height: 40px; width: auto;" />', esc_url($logo_url)) : '';
 		}
 
 		// Specific branding for Agency/Pro if set in meta (optional override)

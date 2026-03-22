@@ -89,12 +89,12 @@ class FileVaultService {
 		return false;
 	}
 
-	public function get_access_query_args( $user_id_current ) {
+	public function get_access_query_args( $user_id_current, $is_generated_filter = null ) {
 		$user_plan = strtolower( get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free' );
 		$parent_agency = (int) get_user_meta( $user_id_current, 'ffp_parent_agency', true );
 		$is_admin = user_can( $user_id_current, 'manage_options' );
 
-		if ( $is_admin ) {
+		if ( $is_admin && $is_generated_filter === null ) {
 			return [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'posts_per_page' => -1 ];
 		}
 
@@ -136,13 +136,23 @@ class FileVaultService {
 			];
 		}
 
-		// 4. Agency Owners see files belonging to their team
+		// 4. Agency Owners see files belonging to their team (Exclude generated docs from team view)
 		if ( $user_plan === 'agency' ) {
 			$meta_query[] = [
-				'key'   => '_ffp_author_parent',
-				'value' => (int) $user_id_current,
-				'type'  => 'NUMERIC'
+				'relation' => 'AND',
+				[ 'key' => '_ffp_author_parent', 'value' => (int) $user_id_current, 'type' => 'NUMERIC' ],
+				[ 'key' => '_ffp_is_generated_doc', 'compare' => 'NOT EXISTS' ]
 			];
+		}
+
+		// Handle Generated Filter
+		$final_meta_query = [ 'relation' => 'AND' ];
+		$final_meta_query[] = $meta_query;
+
+		if ( $is_generated_filter === true ) {
+			$final_meta_query[] = [ 'key' => '_ffp_is_generated_doc', 'value' => '1' ];
+		} elseif ( $is_generated_filter === false ) {
+			$final_meta_query[] = [ 'key' => '_ffp_is_generated_doc', 'compare' => 'NOT EXISTS' ];
 		}
 
 		return [
@@ -150,7 +160,7 @@ class FileVaultService {
 			'post_status'    => 'inherit',
 			'numberposts'    => -1,
 			'posts_per_page' => -1,
-			'meta_query'     => $meta_query
+			'meta_query'     => $final_meta_query
 		];
 	}
 

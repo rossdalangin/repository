@@ -334,6 +334,7 @@ class Settings {
 		}
 
 		$active_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'profile';
+		$vault_subtab = isset( $_GET['subtab'] ) ? sanitize_text_field( $_GET['subtab'] ) : 'all';
 		$user_id_current = get_current_user_id();
 		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
 		$is_admin = current_user_can( 'manage_options' );
@@ -648,10 +649,15 @@ class Settings {
 		$user_id_current = get_current_user_id();
 		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
 		$is_admin = current_user_can( 'manage_options' );
+		$subtab = isset( $_GET['subtab'] ) ? sanitize_text_field( $_GET['subtab'] ) : 'all';
 
 		?>
 		<div class="ffp-card">
 			<h3>File Vault (Secure Repository)</h3>
+			<div class="ffp-subtabs" style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+				<a href="?page=ffp-dashboard&tab=vault&subtab=all" class="button <?php echo $subtab === 'all' ? 'button-primary' : ''; ?>">All Files</a>
+				<a href="?page=ffp-dashboard&tab=vault&subtab=generated" class="button <?php echo $subtab === 'generated' ? 'button-primary' : ''; ?>">My Generated Docs</a>
+			</div>
 			<div class="ffp-help-text">
 				Securely store and manage your legal and identity documents. Files are protected via signed URLs to prevent unauthorized access.
 				<?php if ( $is_admin || $user_plan === 'agency' ) : ?>
@@ -672,7 +678,12 @@ class Settings {
 							<?php
 							$user_id_current = get_current_user_id();
 							$vault_service = \FreelanceFlowPro\Core\Plugin::instance()->get( 'file_vault' );
-							$query_args = $vault_service->get_access_query_args( $user_id_current );
+
+							$gen_filter = null;
+							if ( $subtab === 'generated' ) $gen_filter = true;
+							elseif ( $subtab === 'all' ) $gen_filter = false;
+
+							$query_args = $vault_service->get_access_query_args( $user_id_current, $gen_filter );
 							$attachments = get_posts( $query_args );
 
 							if ( empty( $attachments ) ) : ?>
@@ -883,10 +894,53 @@ class Settings {
 		// Increment count
 		update_user_meta( $user_id, 'ffp_doc_count_' . date('Ym'), $doc_count + 1 );
 
+		// Save generated file to Vault before streaming
+		$filename = $template_id . '-' . date('Ymd-His') . '.' . $format;
+		$temp_file = wp_upload_dir()['path'] . '/' . $filename;
+
 		if ( $format === 'pdf' ) {
-			$doc_service->export_pdf( $parsed_content, $template_id . '.pdf' );
+			// PDF Generation to buffer
+			if ( class_exists( '\Dompdf\Dompdf' ) ) {
+				$dompdf = new \Dompdf\Dompdf();
+				$dompdf->loadHtml( $parsed_content );
+				$dompdf->setPaper( 'A4', 'portrait' );
+				$dompdf->render();
+				file_put_contents( $temp_file, $dompdf->output() );
+			}
 		} else {
-			$doc_service->export_docx( $parsed_content, $template_id . '.docx' );
+			// DOCX Generation
+			$html_doc = "<html><body>" . $parsed_content . "</body></html>";
+			file_put_contents( $temp_file, $html_doc );
+		}
+
+		if ( file_exists( $temp_file ) ) {
+			$attachment_id = wp_insert_attachment( [
+				'guid'           => wp_upload_dir()['url'] . '/' . basename( $temp_file ),
+				'post_mime_type' => ( $format === 'pdf' ) ? 'application/pdf' : 'application/msword',
+				'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $temp_file ) ),
+				'post_content'   => 'Auto-generated ' . strtoupper($format) . ' from ' . $template_id,
+				'post_status'    => 'inherit',
+				'post_author'    => $user_id
+			], $temp_file );
+
+			if ( ! is_wp_error( $attachment_id ) ) {
+				require_once( ABSPATH . 'wp-admin/includes/image.php' );
+				wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $temp_file ) );
+
+				// Tag as generated doc and strictly private
+				update_post_meta( $attachment_id, '_ffp_is_generated_doc', '1' );
+				update_post_meta( $attachment_id, 'ffp_vault_visibility', 'admin' );
+				update_post_meta( $attachment_id, '_ffp_author_id', $user_id );
+				update_post_meta( $attachment_id, '_ffp_is_admin_file', user_can($user_id, 'manage_options') ? '1' : '0' );
+				update_post_meta( $attachment_id, '_ffp_author_parent', (int) get_user_meta($user_id, 'ffp_parent_agency', true) );
+			}
+		}
+
+		// Stream to user
+		if ( $format === 'pdf' ) {
+			$doc_service->export_pdf( $parsed_content, $filename );
+		} else {
+			$doc_service->export_docx( $parsed_content, $filename );
 		}
 		exit;
 	}
