@@ -39,6 +39,29 @@ FreelanceFlow Pro isn’t just a document generator. It’s a **Command Center**
 
 ---
 
+### **Proof That It Works (Success Stories)**
+
+*"I was losing an average of 4 hours a week to manual contract drafting. With FreelanceFlow Pro, I generate a contract in 45 seconds and my clients have never been more impressed."*
+**— Sarah J., Virtual Executive Assistant**
+
+*"As an Agency Owner, I needed a way to provide my freelancers with a professional document system that I could control. The multi-tenant feature is a game-changer for our operations."*
+**— Mark R., CEO of ScaleUp Agency**
+
+---
+
+### **Frequently Asked Questions**
+
+**Is it secure?**
+Absolutely. We use enterprise-grade signed URLs and unique nonces for every document and file request. Your sensitive client data stays between you and your client.
+
+**Can I use my own Stripe or PayPal keys?**
+Yes! Agency users can input their own API keys, ensuring that all revenue from their sub-users flows directly to their own business account.
+
+**Is there a limit on documents?**
+Free users have a limit of 3 documents per month. Pro and Agency users enjoy unlimited document generation and storage.
+
+---
+
 ### **Reclaim 20 Hours a Month. Every Month.**
 
 If you bill just $50/hour, FreelanceFlow Pro pays for itself in the first **30 minutes** of time saved. The rest is pure profit.

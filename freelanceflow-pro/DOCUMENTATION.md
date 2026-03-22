@@ -70,6 +70,35 @@ FreelanceFlow Pro is an enterprise-grade document automation and secure multi-te
 
 ---
 
+## ✅ New User Onboarding Checklist
+To get the most out of FreelanceFlow Pro, complete these steps in order:
+
+1.  **Brand Your Instance:** Head to `Profile & Branding`. Enter your business name and upload a high-resolution logo (minimum 200px width recommended).
+2.  **Configure Payments:** Even if you aren't selling access, setting up your Stripe/PayPal keys ensures you're ready for our upcoming client-billing features.
+3.  **Generate Your First Doc:** Select the 'VA Proposal' or 'Contract' template. Use the `Load Sample` buttons to see what high-converting documents look like.
+4.  **Seed Your Vault:** Upload your current portfolio or standard service agreement to the File Vault. Set it to 'Private' to test the signed URL system.
+
+---
+
+## 📢 Marketing 101 for Agency Owners
+If you've upgraded to the Agency tier, you're now a SaaS owner. Here’s how to market your new "infrastructure" to your team:
+
+- **The Value Prop:** "Join my team and get access to enterprise-grade tools. You'll spend less time on paperwork and more time on client work."
+- **Standardization:** Use the shared vault to provide your team with standardized SOPs and contract templates. This ensures a consistent experience for *all* your clients.
+- **Onboarding:** Use the `VIDEO_SCRIPTS.md` to record a personalized "Welcome to the Team" tour for your new hires.
+
+---
+
+## 🛠️ API & Developer Reference
+FreelanceFlow Pro exposes a REST API for advanced integrations (AI, CRM, etc).
+
+- **Namespace:** `/wp-json/ffp/v1/`
+- **Endpoints:**
+    - `GET /templates`: List all active document templates.
+    - `POST /webhooks/stripe`: The target for your Stripe dashboard webhooks.
+
+---
+
 ## ❓ FAQ & Troubleshooting
 - **PDF not downloading?** The system includes a built-in fix for local XAMPP environments, but ensure `allow_url_fopen` is enabled on your live server.
 - **Branding not showing?** Free tier users only show the business name. Upgrade to Pro/Agency to enable full Logo support.

@@ -439,19 +439,30 @@ class Settings {
 					<?php if ( $user_plan === 'agency' ) : ?>
 					<tr>
 						<th>Stripe Secret Key (Agency)</th>
-						<td><input type="password" name="ffp_agency_stripe_key" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_stripe_key', true ) ); ?>" class="regular-text" /></td>
+						<td>
+							<input type="password" name="ffp_agency_stripe_key" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_stripe_key', true ) ); ?>" class="regular-text" />
+							<p class="description"><strong>Sovereign Mode:</strong> Enter your own Stripe Secret Key to route payments from your team directly to your account.</p>
+						</td>
 					</tr>
 					<tr>
 						<th>Stripe Webhook Secret (Agency)</th>
-						<td><input type="password" name="ffp_agency_stripe_secret" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_stripe_secret', true ) ); ?>" class="regular-text" /></td>
+						<td>
+							<input type="password" name="ffp_agency_stripe_secret" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_stripe_secret', true ) ); ?>" class="regular-text" />
+							<p class="description">Required to process automatic plan upgrades for your sub-users.</p>
+						</td>
 					</tr>
 					<tr>
 						<th>PayPal Client ID (Agency)</th>
-						<td><input type="text" name="ffp_agency_paypal_client_id" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_paypal_client_id', true ) ); ?>" class="regular-text" /></td>
+						<td>
+							<input type="text" name="ffp_agency_paypal_client_id" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_paypal_client_id', true ) ); ?>" class="regular-text" />
+							<p class="description">Your PayPal REST App Client ID for direct team monetization.</p>
+						</td>
 					</tr>
 					<tr>
 						<th>PayPal Client Secret (Agency)</th>
-						<td><input type="password" name="ffp_agency_paypal_client_secret" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_paypal_client_secret', true ) ); ?>" class="regular-text" /></td>
+						<td>
+							<input type="password" name="ffp_agency_paypal_client_secret" value="<?php echo esc_attr( get_user_meta( $user_id_current, 'ffp_agency_paypal_client_secret', true ) ); ?>" class="regular-text" />
+						</td>
 					</tr>
 					<?php endif; ?>
 				</table>
