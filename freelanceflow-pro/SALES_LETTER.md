@@ -19,7 +19,7 @@ FreelanceFlow Pro isn’t just a document generator. It’s a **Command Center**
 - **🚀 Instant Professionalism:** Generate legally-sound Service Agreements, Proposals, and Invoices in 60 seconds.
 - **💼 Master Branding:** Automatically inject your logo and identity into every document. Look like a 7-figure agency from Day 1.
 - **🔒 Zero-Trust Security:** Stop sending sensitive data over unencrypted email. Our File Vault uses expiring signed URLs to protect your business.
-- **🏢 Agency Monetization (Unique Feature):** Building a team? You are now the SaaS owner. Route payments from your sub-users directly into **YOUR** Stripe or PayPal account.
+- **🏢 Agency Multiplier (Sovereign Payments):** This is our most powerful feature. When you upgrade to Agency, you become the SaaS owner. You can route payments from your team’s clients directly into **YOUR** Stripe account. We provide the dashboard, you keep 100% of the profit. It’s a literal business-in-a-box.
 - **🧪 High-Converting Samples:** Use our "Load Sample" data to see exactly how the world’s most successful freelancers structure their contracts and SOWs.
 
 ---
@@ -68,5 +68,10 @@ If you bill just $50/hour, FreelanceFlow Pro pays for itself in the first **30 m
 
 **Stop working for your admin. Make your admin work for you.**
 
+### ⏳ Limited Time Opportunity
+We are currently offering a "Legacy Agency" rate. Join today and lock in your $99/mo rate forever, even as we add AI-template generation and CRM integrations next month.
+
 **[UPGRADE TO FREELANCEFLOW PRO NOW]**
 *100% Secure Checkout via Stripe & PayPal*
+
+**P.S.** Every hour you spend on admin is an hour you aren't billing. FreelanceFlow Pro pays for itself by the time you've generated your second document. Don't let your infrastructure be your ceiling.

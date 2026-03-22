@@ -36,6 +36,31 @@ Stop babysitting. Start scaling.
 
 ---
 
+## 💼 LinkedIn "Thought Leadership" Ad Copy
+**Headline:** Scaling an agency is a technical challenge, not just a talent challenge.
+**Body:**
+Most agency owners think their bottleneck is finding better freelancers.
+
+In reality, the bottleneck is **Infrastructure.**
+
+Without a standardized system for contracts, proposals, and secure document storage, you’re just managing a collection of individual silos.
+
+FreelanceFlow Pro provides the white-labeled infrastructure to unify your workforce.
+- Standardize every legal document.
+- Secure every sensitive file with signed URLs.
+- Own the payment flow with Sovereign Keys.
+
+The difference between a 6-figure and 7-figure agency is the system. Build yours today.
+
+---
+
+## 🤳 TikTok & Reels "Fast-Cut" Script
+**Visual:** Fast cuts between the dashboard, a professional laptop setup, and a "Success" notification.
+**Audio (Text-to-Speech or Voiceover):**
+"Freelancers, stop sending messy contracts! 🛑 I found a secret weapon that generates pro contracts in 60 seconds. ⚡ It’s called FreelanceFlow Pro. It has a built-in File Vault for your client IDs and even archives every doc you generate automatically. No more 'Where is that PDF?' stress. 📉 Click the bio to join for free. 🚀"
+
+---
+
 ## 📧 Cold Outreach Email Templates
 
 ### Template 1: Selling the SaaS to Agency Owners

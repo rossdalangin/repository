@@ -21,11 +21,14 @@ FreelanceFlow Pro is an enterprise-grade document automation and secure multi-te
 
 ### 3. File Vault (Secure Repository)
 **Purpose:** Enterprise-grade security for sensitive documents.
+- **Sub-Tabs Configuration:**
+    - **All Files:** The primary repository for your legal and identity documents.
+    - **My Generated Docs:** An automated archival system. Every PDF or DOCX you generate is instantly saved here as a private file for future reference.
 - **Strict Tier Visibility:**
-    - **Private:** Visible ONLY to the uploader. All Free and Pro user uploads are private by default.
-    - **Free Account Only (Admin/Agency Public):** Files intended specifically for Free users (direct or within an agency).
-    - **Pro Account Only (Admin/Agency Premium):** Premium resources strictly for Pro subscribers.
-    - **Agency Account Only:** High-level strategic documents for Agency owners.
+    - **Private (Uploader Only):** Visible ONLY to you. This is the default for all generated documents.
+    - **Visible to All Tiers:** Publicly accessible resources for everyone in your organization.
+    - **Visible to Pro & Agency:** Premium resources for paid subscribers.
+    - **Visible to Agency Only:** High-level strategic documents for Agency owners.
 - **Access Control:** The system automatically segregates global Admin resources from tenant-specific Agency resources. Referred users only see what their Agency provides.
 - **Security:** Every download uses a signed, one-time-use token (`ffp_token`).
 
@@ -77,6 +80,7 @@ To get the most out of FreelanceFlow Pro, complete these steps in order:
 2.  **Configure Payments:** Even if you aren't selling access, setting up your Stripe/PayPal keys ensures you're ready for our upcoming client-billing features.
 3.  **Generate Your First Doc:** Select the 'VA Proposal' or 'Contract' template. Use the `Load Sample` buttons to see what high-converting documents look like.
 4.  **Seed Your Vault:** Upload your current portfolio or standard service agreement to the File Vault. Set it to 'Private' to test the signed URL system.
+- **Review Realistic Samples:** Navigate to the `/samples/` directory in the plugin folder. Review the pre-filled DOCX and CSV files to understand the gold standard for freelancer documentation.
 
 ---
 
@@ -100,6 +104,10 @@ FreelanceFlow Pro exposes a REST API for advanced integrations (AI, CRM, etc).
 ---
 
 ## ❓ FAQ & Troubleshooting
-- **PDF not downloading?** The system includes a built-in fix for local XAMPP environments, but ensure `allow_url_fopen` is enabled on your live server.
+- **PDF not downloading?**
+    - **XAMPP/Local:** The system includes a built-in fix for local SSL issues.
+    - **Shared Hosting:** Ensure `allow_url_fopen` is enabled in your `php.ini`.
+    - **Corrupted Files:** If PDFs appear blank, ensure no other plugin is outputting content (echo/print) before the generation starts. FreelanceFlow Pro handles output buffer cleaning automatically, but strict host configurations may interfere.
+- **DOCX Formatting:** The DOCX export uses a high-compatibility HTML-header method. For complex layouts, we recommend generating a PDF for the best visual fidelity.
 - **Branding not showing?** Free tier users only show the business name. Upgrade to Pro/Agency to enable full Logo support.
-- **Sub-user can't see team files?** Verify the file visibility in the Vault is set to "Agency".
+- **Sub-user can't see team files?** Verify the file visibility in the Vault is set to "Visible to All Tiers" or "Visible to Pro & Agency" depending on their plan.
