@@ -90,7 +90,9 @@ class TemplateEngine {
 				$list .= '</ul>';
 				$content = str_replace( '{{' . $key . '}}', $list, $content );
 			} else {
-				$content = str_replace( '{{' . $key . '}}', esc_html((string)$value), $content );
+				// Allow HTML for specific keys like branding logo
+				$val_to_replace = ( $key === 'business_logo' ) ? (string)$value : esc_html((string)$value);
+				$content = str_replace( '{{' . $key . '}}', $val_to_replace, $content );
 			}
 		}
 		return $content;
