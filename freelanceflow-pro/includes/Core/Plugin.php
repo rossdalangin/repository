@@ -27,6 +27,20 @@ class Plugin {
 	}
 
 	public function get_plans(): array {
+		$saved_plans = get_option( 'ffp_plans_config' );
+		if ( $saved_plans && is_array( $saved_plans ) ) {
+			// Ensure dynamic limit is still injected into the correct feature string if default was used
+			if ( isset($saved_plans['free']['features']) ) {
+				$free_limit = (int) get_option( 'ffp_free_limit', 3 );
+				foreach ($saved_plans['free']['features'] as &$feat) {
+					if ( strpos($feat, 'Documents / mo') !== false ) {
+						$feat = "$free_limit Documents / mo";
+					}
+				}
+			}
+			return $saved_plans;
+		}
+
 		$free_limit = (int) get_option( 'ffp_free_limit', 3 );
 		return [
 			'free'   => [
@@ -37,7 +51,8 @@ class Plugin {
 					"Basic Templates",
 					"Standard Support"
 				],
-				'button'   => 'Join Free'
+				'button'   => 'Join Free',
+				'price_id' => 'free'
 			],
 			'pro'    => [
 				'title'    => 'Pro',

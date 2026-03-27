@@ -160,6 +160,27 @@ class Settings {
 		}
 	}
 
+	public function handle_plans_save() {
+		if ( ! current_user_can( 'manage_options' ) ) return;
+
+		$plans_raw = $_POST['plans'] ?? [];
+		$config = [];
+
+		foreach ( $plans_raw as $key => $data ) {
+			$features = array_map( 'trim', explode( ',', $data['features'] ) );
+			$config[ $key ] = [
+				'title'    => sanitize_text_field( $data['title'] ),
+				'price'    => sanitize_text_field( $data['price'] ),
+				'features' => $features,
+				'price_id' => sanitize_text_field( $data['price_id'] ),
+				'button'   => ( $key === 'free' ) ? 'Join Free' : ( ( $key === 'pro' ) ? 'Get Pro' : 'Get Agency' )
+			];
+		}
+
+		update_option( 'ffp_plans_config', $config );
+		add_settings_error( 'ffp_messages', 'ffp_msg', 'Master Plan Configuration saved.', 'updated' );
+	}
+
 	public function handle_create_subuser() {
 		if ( ! isset( $_POST['ffp_subuser_nonce'] ) || ! wp_verify_nonce( $_POST['ffp_subuser_nonce'], 'ffp_create_subuser' ) ) {
 			return;
@@ -327,6 +348,10 @@ class Settings {
 		$user_plan = get_user_meta( $user_id_current, 'ffp_user_plan', true ) ?: 'free';
 		$is_admin = current_user_can( 'manage_options' );
 		$is_agency = ( $user_plan === 'agency' );
+
+		if ( $is_admin && isset($_POST['ffp_save_plans_nonce']) && wp_verify_nonce($_POST['ffp_save_plans_nonce'], 'ffp_save_plans') ) {
+			$this->handle_plans_save();
+		}
 
 		$tabs = [
 			'profile'      => 'Profile & Branding',
@@ -786,6 +811,35 @@ class Settings {
 			<hr style="margin: 40px 0;">
 
 			<?php if ( current_user_can( 'manage_options' ) ) : ?>
+			<div class="ffp-card" style="border-top: 4px solid #4f46e5;">
+				<h3>🛠️ Master Plan Configuration (Admin Only)</h3>
+				<form method="post" action="">
+					<?php wp_nonce_field('ffp_save_plans', 'ffp_save_plans_nonce'); ?>
+					<table class="wp-list-table widefat fixed striped">
+						<thead>
+							<tr>
+								<th>Plan Key</th>
+								<th>Public Title</th>
+								<th>Price ($)</th>
+								<th>Features (Comma Separated)</th>
+								<th>Gateway Price ID (Stripe)</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $plans as $key => $p ) : ?>
+								<tr>
+									<td><strong><?php echo strtoupper($key); ?></strong></td>
+									<td><input type="text" name="plans[<?php echo $key; ?>][title]" value="<?php echo esc_attr($p['title']); ?>" class="widefat"></td>
+									<td><input type="text" name="plans[<?php echo $key; ?>][price]" value="<?php echo esc_attr($p['price']); ?>" class="widefat"></td>
+									<td><textarea name="plans[<?php echo $key; ?>][features]" class="widefat" rows="3"><?php echo esc_textarea(implode(', ', $p['features'])); ?></textarea></td>
+									<td><input type="text" name="plans[<?php echo $key; ?>][price_id]" value="<?php echo esc_attr($p['price_id'] ?? ''); ?>" class="widefat"></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
+					<p style="margin-top:20px;"><input type="submit" class="button button-primary" value="Save Plan Configurations"></p>
+				</form>
+			</div>
 			<hr style="margin: 40px 0;">
 			<h3>Global Payment Gateway Configuration</h3>
 			<form method="post" action="options.php">
