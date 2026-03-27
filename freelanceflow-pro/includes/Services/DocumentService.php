@@ -98,10 +98,10 @@ class DocumentService {
 				}
 
 				if ( $logo_path && file_exists( $logo_path ) ) {
-					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 40px; width: auto; display: block;" />', $logo_path );
+					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 90px; width: auto; display: block;" />', $logo_path );
 				} else {
 					// Fallback to URL with SSL Context (Handled in export_pdf)
-					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 40px; width: auto; display: block;" />', esc_url($logo_url) );
+					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 90px; width: auto; display: block;" />', esc_url($logo_url) );
 				}
 			} else {
 				$placeholders['business_logo'] = '';
