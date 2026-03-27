@@ -83,7 +83,18 @@ class DocumentService {
 			$placeholders['business_logo'] = '';
 		} else {
 			$logo_url = get_user_meta( $user_id, 'ffp_logo_url', true ) ?: get_option( 'ffp_logo_url', '' );
-			$placeholders['business_logo'] = $logo_url ? sprintf('<img src="%s" style="max-height: 40px; width: auto;" />', esc_url($logo_url)) : '';
+
+			if ( $logo_url ) {
+				// Fix: Convert URL to absolute server path for Dompdf compatibility
+				$logo_path = str_replace( content_url(), WP_CONTENT_DIR, $logo_url );
+				if ( file_exists( $logo_path ) ) {
+					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 40px; width: auto; display: block;" />', $logo_path );
+				} else {
+					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 40px; width: auto; display: block;" />', esc_url($logo_url) );
+				}
+			} else {
+				$placeholders['business_logo'] = '';
+			}
 		}
 
 		// Specific branding for Agency/Pro if set in meta (optional override)

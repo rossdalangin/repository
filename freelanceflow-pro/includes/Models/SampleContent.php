@@ -228,7 +228,83 @@ class SampleContent {
 				'fields'      => [
 					'kpis'            => [ 'label' => 'Key Metrics', 'type' => 'repeater', 'note' => 'e.g. Website Traffic: +15%' ],
 					'projects'        => [ 'label' => 'Completed Work', 'type' => 'repeater' ],
-					'recommendations' => [ 'label' => 'Future Strategy', 'type' => 'textarea', 'sample' => 'We suggest increasing LinkedIn ad spend by 10% next month.' ],
+					'recommendations' => [ 'label' => 'Future Strategy', 'type' => 'textarea', 'sample' => 'Based on this month\'s high engagement on visual content, we recommend shifting 15% of the outreach budget from LinkedIn to Instagram Reels. Additionally, we should initiate the Q4 Referral Campaign by the 15th to capitalize on holiday demand.', 'note' => 'Future strategic advice.' ],
+				]
+			],
+			'va_discovery' => [
+				'title'       => 'VA Discovery Call Questionnaire',
+				'description' => 'Strategic questions to qualify leads and uncover client pain points during the first call.',
+				'content'     => $branding_header . '<h1>Discovery Call Summary: {{client_name}}</h1>
+								 <h2>Current Bottlenecks</h2>
+								 <p>{{pain_points}}</p>
+								 <h2>Goals & Objectives</h2>
+								 <p>{{goals}}</p>
+								 <h2>Preferred Workflow</h2>
+								 <p>{{workflow_notes}}</p>
+								 <h2>Proposed Support Tier</h2>
+								 <p>Based on our discussion, I recommend the <strong>{{recommended_tier}}</strong> plan.</p>',
+				'fields'      => [
+					'client_name'      => [ 'label' => 'Prospect Name', 'sample' => 'Jordan Smith, Founder of TechStart' ],
+					'pain_points'     => [ 'label' => 'Key Pain Points', 'type' => 'textarea', 'sample' => 'Client is spending 12 hours a week on manual email sorting and appointment scheduling. Missing roughly 20% of inbound leads due to slow response times.' ],
+					'goals'           => [ 'label' => 'Client Goals', 'type' => 'textarea', 'sample' => 'To achieve "Inbox Zero" daily, automate the booking process via Calendly, and free up 10 hours for high-level business development.' ],
+					'workflow_notes'  => [ 'label' => 'Workflow Tools', 'type' => 'textarea', 'sample' => 'Primary communication via Slack. Tasks managed in Asana. Email via G-Suite.' ],
+					'recommended_tier' => [ 'label' => 'Recommended Tier', 'sample' => 'Standard 20-Hour Retainer' ],
+				]
+			],
+			'content_calendar' => [
+				'title'       => 'Social Media Content Calendar',
+				'description' => 'Plan and present your content strategy for the month in a clean, structured format.',
+				'content'     => $branding_header . '<h1>Content Strategy: {{month_year}}</h1>
+								 <h2>Campaign Objective</h2>
+								 <p>{{objective}}</p>
+								 <table style="width:100%; border-collapse: collapse;">
+									<thead><tr style="background:#f1f5f9;"><th style="padding:10px; border:1px solid #ddd;">Week</th><th style="padding:10px; border:1px solid #ddd;">Themes & Topics</th></tr></thead>
+									<tbody>{{weekly_plan}}</tbody>
+								 </table>
+								 <h2>Key Visual Direction</h2>
+								 <p>{{visual_notes}}</p>',
+				'fields'      => [
+					'month_year'   => [ 'label' => 'Month/Year', 'sample' => date('F Y') ],
+					'objective'    => [ 'label' => 'Campaign Goal', 'type' => 'textarea', 'sample' => 'To drive 500 new registrations for the November "Freelance Freedom" webinar and increase brand authority in the VA niche.' ],
+					'weekly_plan'  => [ 'label' => 'Weekly Schedule', 'type' => 'repeater', 'note' => 'Format: Week # - Content Focus' ],
+					'visual_notes' => [ 'label' => 'Creative Direction', 'type' => 'textarea', 'sample' => 'High-contrast minimalist graphics, 3 carousel posts highlighting user results, and 2 "Behind the Scenes" Reels.' ],
+				]
+			],
+			'client_onboarding' => [
+				'title'       => 'Freelancer Onboarding Checklist',
+				'description' => 'Professional checklist to ensure a smooth transition for new clients and set expectations.',
+				'content'     => $branding_header . '<h1>Onboarding Checklist: {{project_title}}</h1>
+								 <p>Welcome! To get started efficiently, please ensure we have access to the following:</p>
+								 {{checklist_items}}
+								 <h2>Communication Guidelines</h2>
+								 <p>{{comm_rules}}</p>
+								 <h2>Next Milestone</h2>
+								 <p>{{first_task}}</p>',
+				'fields'      => [
+					'project_title'   => [ 'label' => 'Project Name', 'sample' => 'Q4 Digital Marketing Overhaul' ],
+					'checklist_items' => [ 'label' => 'Requirements', 'type' => 'repeater', 'note' => 'e.g. WordPress Admin Access, Branding Assets (SVG Logo).' ],
+					'comm_rules'      => [ 'label' => 'Communication Plan', 'type' => 'textarea', 'sample' => 'All formal approvals via Email. Quick queries via Slack (9 AM - 5 PM EST). Weekly sync every Tuesday at 10 AM.' ],
+					'first_task'      => [ 'label' => 'First Action Item', 'sample' => 'Audit of current Facebook Ad account performance.' ],
+				]
+			],
+			'brand_guidelines' => [
+				'title'       => 'Brand Identity Brief',
+				'description' => 'Summarize a client\'s brand elements for designers or content creators.',
+				'content'     => $branding_header . '<h1>Brand Identity Brief: {{brand_name}}</h1>
+								 <h2>Brand Voice</h2>
+								 <p>{{voice}}</p>
+								 <h2>Color Palette</h2>
+								 {{colors}}
+								 <h2>Typography</h2>
+								 {{fonts}}
+								 <h2>Target Audience</h2>
+								 <p>{{audience}}</p>',
+				'fields'      => [
+					'brand_name' => [ 'label' => 'Brand/Company', 'sample' => 'Lumina Wellness' ],
+					'voice'      => [ 'label' => 'Brand Voice', 'type' => 'textarea', 'sample' => 'Empathetic, authoritative, and minimalist. We avoid jargon and focus on clarity and peace.' ],
+					'colors'     => [ 'label' => 'Primary Colors', 'type' => 'repeater', 'note' => 'List HEX codes or names.' ],
+					'fonts'      => [ 'label' => 'Brand Fonts', 'type' => 'repeater', 'note' => 'e.g. Montserrat (Headings), Open Sans (Body).' ],
+					'audience'   => [ 'label' => 'Ideal Customer', 'type' => 'textarea', 'sample' => 'Female entrepreneurs aged 30-45 looking for holistic stress management solutions.' ],
 				]
 			]
 		];

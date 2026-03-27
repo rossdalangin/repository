@@ -84,6 +84,25 @@ To get the most out of FreelanceFlow Pro, complete these steps in order:
 
 ---
 
+## 💎 Tier Mastery: Maximizing Your Subscription
+
+### Free Tier: The "Starter" Strategy
+- **Capabilities:** 3 Documents/mo, Basic Templates.
+- **Mastery:** Use the Free tier to qualifying leads. Generate a "Discovery Call Questionnaire" or "ROI Impact Report" to prove your value before committing to a full project.
+
+### Pro Tier: The "Scaling Solo" Strategy
+- **Capabilities:** Unlimited Docs, Custom Branding, Full Template Library.
+- **Mastery:** Enable your logo in `Profile & Branding`. Every proposal and invoice you send now acts as a brand ambassador. Use the "Case Study Generator" monthly to build a massive portfolio of results.
+
+### Agency Tier: The "SaaS Infrastructure" Strategy
+- **Capabilities:** Sub-user management, White-labeling, Sovereign Payments.
+- **Mastery:** This is where you stop being a freelancer and start being an infrastructure owner.
+    1. **Centralize:** Require all your contractors to use *your* dash for proposals.
+    2. **Sovereign Payments:** Input your Stripe keys. When your team's clients pay an invoice generated from *your* platform, the money hits *your* account first.
+    3. **Visibility:** Use the "All Files" vault view to audit every piece of ID and contract your team handles, ensuring 100% compliance.
+
+---
+
 ## 📢 Marketing 101 for Agency Owners
 If you've upgraded to the Agency tier, you're now a SaaS owner. Here’s how to market your new "infrastructure" to your team:
 

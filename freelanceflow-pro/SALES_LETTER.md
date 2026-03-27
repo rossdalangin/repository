@@ -20,6 +20,7 @@ FreelanceFlow Pro isn’t just a document generator. It’s a **Command Center**
 - **💼 Master Branding:** Automatically inject your logo and identity into every document. Look like a 7-figure agency from Day 1.
 - **🔒 Zero-Trust Security:** Stop sending sensitive data over unencrypted email. Our File Vault uses expiring signed URLs to protect your business.
 - **🏢 Agency Multiplier (Sovereign Payments):** This is our most powerful feature. When you upgrade to Agency, you become the SaaS owner. You can route payments from your team’s clients directly into **YOUR** Stripe account. We provide the dashboard, you keep 100% of the profit. It’s a literal business-in-a-box.
+- **📚 16+ Professional Templates:** We’ve expanded our library to include every document you need to scale—from Discovery Questionnaires and Content Calendars to sophisticated Independent Contractor Agreements.
 - **🧪 High-Converting Samples:** Use our "Load Sample" data to see exactly how the world’s most successful freelancers structure their contracts and SOWs.
 
 ---
