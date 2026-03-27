@@ -10,6 +10,8 @@ use FreelanceFlowPro\Models\SampleContent;
 class Settings {
 
 	public function __construct() {
+		add_action( 'register_form', [ $this, 'register_form_fields' ] );
+		add_action( 'user_register', [ $this, 'save_register_fields' ] );
 		add_action( 'admin_menu', [ $this, 'add_menu_pages' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		add_action( 'admin_init', [ $this, 'register_settings' ] );
@@ -200,11 +202,19 @@ class Settings {
 		$plan_id   = sanitize_text_field( $_POST['plan_id'] );
 		$gateway   = sanitize_text_field( $_POST['gateway'] ?? 'stripe' );
 		$user_id   = get_current_user_id();
+		$is_registration = isset( $_POST['is_registration'] ) && $_POST['is_registration'] === '1';
 
-		// Handle Free Plan immediately for logged in users
-		if ( $user_id && $plan_id === 'free' ) {
-			update_user_meta( $user_id, 'ffp_user_plan', 'free' );
-			wp_redirect( admin_url('admin.php?page=ffp-dashboard') );
+		// Handle Free Plan
+		if ( $plan_id === 'free' ) {
+			if ( $user_id ) {
+				update_user_meta( $user_id, 'ffp_user_plan', 'free' );
+				wp_redirect( admin_url('admin.php?page=ffp-dashboard') );
+			} else {
+				// Redirect to WP Registration for Free Plan
+				$reg_url = wp_registration_url();
+				$reg_url = add_query_arg( [ 'ffp_plan' => 'free', 'ffp_agency' => $agency_id ], $reg_url );
+				wp_redirect( $reg_url );
+			}
 			exit;
 		}
 
@@ -737,6 +747,9 @@ class Settings {
 	private function render_subscription_tab() {
 		$user_id = get_current_user_id();
 		$current_plan = get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free';
+		$plugin = \FreelanceFlowPro\Core\Plugin::instance();
+		$plans  = $plugin->get_plans();
+
 		?>
 		<div class="ffp-card">
 			<h3>Subscription Management</h3>
@@ -747,43 +760,27 @@ class Settings {
 			<p>Your current plan: <strong><?php echo esc_html( strtoupper( $current_plan ) ); ?></strong></p>
 
 			<div class="ffp-pricing-grid">
-				<div class="ffp-price-card <?php echo $current_plan === 'free' ? 'active' : ''; ?>">
-					<h4>Free</h4>
-					<p>$0 /mo</p>
-					<ul>
-						<li>3 Documents / mo</li>
-						<li>Basic Templates</li>
-					</ul>
-					<button disabled>Current Plan</button>
-				</div>
-				<div class="ffp-price-card <?php echo $current_plan === 'pro' ? 'active' : ''; ?>">
-					<h4>Pro</h4>
-					<p>$29 /mo</p>
-					<ul>
-						<li>Unlimited Documents</li>
-						<li>Custom Branding</li>
-						<li>PDF & DOCX Export</li>
-					</ul>
-					<form method="POST" action="">
-						<?php wp_nonce_field( 'ffp_upgrade', 'ffp_upgrade_nonce' ); ?>
-						<input type="hidden" name="ffp_plan_id" value="price_H5ggu9GWU123"> <!-- Example Stripe Price ID -->
-						<button type="submit" class="button-primary" <?php disabled($current_plan, 'pro'); ?>>Upgrade to Pro</button>
-					</form>
-				</div>
-				<div class="ffp-price-card <?php echo $current_plan === 'agency' ? 'active' : ''; ?>">
-					<h4>Agency</h4>
-					<p>$99 /mo</p>
-					<ul>
-						<li>Multi-user Access</li>
-						<li>White-labeling</li>
-						<li>Priority Support</li>
-					</ul>
-					<form method="POST" action="">
-						<?php wp_nonce_field( 'ffp_upgrade', 'ffp_upgrade_nonce' ); ?>
-						<input type="hidden" name="ffp_plan_id" value="price_Agency123">
-						<button type="submit" class="button-primary" <?php disabled($current_plan, 'agency'); ?>>Upgrade to Agency</button>
-					</form>
-				</div>
+				<?php foreach ( $plans as $key => $plan ) : ?>
+					<div class="ffp-price-card <?php echo $current_plan === $key ? 'active' : ''; ?>">
+						<h4><?php echo esc_html( $plan['title'] ); ?></h4>
+						<p>$<?php echo esc_html( $plan['price'] ); ?> /mo</p>
+						<ul>
+							<?php foreach ( $plan['features'] as $feature ) : ?>
+								<li><?php echo esc_html( $feature ); ?></li>
+							<?php endforeach; ?>
+						</ul>
+
+						<?php if ( $current_plan === $key ) : ?>
+							<button disabled>Current Plan</button>
+						<?php else : ?>
+							<form method="POST" action="">
+								<?php wp_nonce_field( 'ffp_upgrade', 'ffp_upgrade_nonce' ); ?>
+								<input type="hidden" name="ffp_plan_id" value="<?php echo esc_attr( $plan['price_id'] ?? $key ); ?>">
+								<button type="submit" class="button-primary">Upgrade to <?php echo esc_html( $plan['title'] ); ?></button>
+							</form>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
 			</div>
 
 			<hr style="margin: 40px 0;">
@@ -986,6 +983,24 @@ class Settings {
 		update_post_meta( $file_id, '_ffp_author_parent', (int) get_user_meta($author_id, 'ffp_parent_agency', true) );
 
 		wp_send_json_success();
+	}
+
+	public function register_form_fields() {
+		$plan   = isset( $_GET['ffp_plan'] ) ? sanitize_text_field( $_GET['ffp_plan'] ) : 'free';
+		$agency = isset( $_GET['ffp_agency'] ) ? absint( $_GET['ffp_agency'] ) : 0;
+		?>
+		<input type="hidden" name="ffp_plan" value="<?php echo esc_attr( $plan ); ?>">
+		<input type="hidden" name="ffp_agency" value="<?php echo (int) $agency; ?>">
+		<?php
+	}
+
+	public function save_register_fields( $user_id ) {
+		if ( isset( $_POST['ffp_plan'] ) ) {
+			update_user_meta( $user_id, 'ffp_user_plan', sanitize_text_field( $_POST['ffp_plan'] ) );
+		}
+		if ( isset( $_POST['ffp_agency'] ) && (int) $_POST['ffp_agency'] > 0 ) {
+			update_user_meta( $user_id, 'ffp_parent_agency', absint( $_POST['ffp_agency'] ) );
+		}
 	}
 
 	public function ajax_save_to_vault() {

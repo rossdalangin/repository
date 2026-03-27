@@ -26,6 +26,46 @@ class Plugin {
 		return $this->services[ $id ] ?? null;
 	}
 
+	public function get_plans(): array {
+		$free_limit = (int) get_option( 'ffp_free_limit', 3 );
+		return [
+			'free'   => [
+				'title'    => 'Free',
+				'price'    => '0',
+				'features' => [
+					"$free_limit Documents / mo",
+					"Basic Templates",
+					"Standard Support"
+				],
+				'button'   => 'Join Free'
+			],
+			'pro'    => [
+				'title'    => 'Pro',
+				'price'    => '29',
+				'features' => [
+					"Unlimited Documents",
+					"Custom Branding",
+					"PDF & DOCX Export",
+					"Priority Support"
+				],
+				'button'   => 'Get Pro',
+				'price_id' => 'price_H5ggu9GWU123'
+			],
+			'agency' => [
+				'title'    => 'Agency',
+				'price'    => '99',
+				'features' => [
+					"Multi-user Access",
+					"White-labeling",
+					"Sovereign Payments",
+					"24/7 VIP Support"
+				],
+				'button'   => 'Get Agency',
+				'price_id' => 'price_Agency123'
+			]
+		];
+	}
+
 	/**
 	 * Middleware-style function for access control
 	 */

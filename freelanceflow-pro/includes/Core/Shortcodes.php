@@ -16,6 +16,7 @@ class Shortcodes {
 	public function get_pricing_html( $agency_id = 0 ) {
 		ob_start();
 		$plugin = Plugin::instance();
+		$plans  = $plugin->get_plans();
 		$user_id = get_current_user_id();
 		$current_plan = $user_id ? (get_user_meta( $user_id, 'ffp_user_plan', true ) ?: 'free') : 'none';
 
@@ -36,69 +37,64 @@ class Shortcodes {
 		?>
 		<div class="ffp-pricing-grid-public">
 			<style>
-				.ffp-pricing-grid-public { display: flex; gap: 20px; text-align: center; }
-				.ffp-price-card { border: 1px solid #ddd; padding: 20px; border-radius: 10px; flex: 1; transition: transform 0.2s; }
-				.ffp-price-card:hover { transform: translateY(-5px); border-color: #4f46e5; }
-				.ffp-price-card h4 { margin: 10px 0; color: #4f46e5; }
-				.ffp-price-card .price { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
-				.ffp-price-card button, .ffp-price-card .btn { background: #4f46e5; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; text-decoration: none; }
+				.ffp-pricing-grid-public { display: flex; gap: 20px; text-align: center; font-family: sans-serif; }
+				.ffp-price-card { border: 1px solid #ddd; padding: 30px 20px; border-radius: 12px; flex: 1; transition: all 0.3s; background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+				.ffp-price-card:hover { transform: translateY(-5px); border-color: #4f46e5; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+				.ffp-price-card h4 { margin: 0; color: #1e293b; font-size: 20px; }
+				.ffp-price-card .price { font-size: 32px; font-weight: 800; margin: 15px 0; color: #4f46e5; }
+				.ffp-price-card .price span { font-size: 14px; color: #64748b; font-weight: 400; }
+				.ffp-price-card ul { list-style: none; padding: 0; margin: 20px 0; text-align: left; font-size: 14px; color: #475569; }
+				.ffp-price-card ul li { margin-bottom: 10px; display: flex; align-items: center; }
+				.ffp-price-card ul li::before { content: "✓"; color: #10b981; font-weight: bold; margin-right: 10px; }
+				.ffp-price-card button, .ffp-price-card .btn { width: 100%; background: #4f46e5; color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+				.ffp-price-card button:hover { background: #4338ca; }
+				.ffp-price-card button:disabled { background: #cbd5e1; cursor: not-allowed; }
 			</style>
-			<div class="ffp-price-card">
-				<h4>Free</h4>
-				<p class="price">$0 /mo</p>
-				<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
-					<input type="hidden" name="action" value="ffp_external_upgrade">
-					<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
-					<input type="hidden" name="plan_id" value="free">
-					<button type="submit" <?php disabled($current_plan, 'free'); ?>><?php echo $user_id ? 'Current Plan' : 'Join Free'; ?></button>
-				</form>
-			</div>
-			<div class="ffp-price-card">
-				<h4>Pro</h4>
-				<p class="price">$29 /mo</p>
-				<?php if ( $any_valid ) : ?>
+
+			<?php foreach ( $plans as $key => $plan ) :
+				if ( $key === 'agency' && $agency_id !== 0 && ! user_can( $agency_id, 'manage_options' ) ) continue;
+				?>
+				<div class="ffp-price-card <?php echo ($key === $current_plan) ? 'active' : ''; ?>">
+					<h4><?php echo esc_html( $plan['title'] ); ?></h4>
+					<p class="price">$<?php echo esc_html( $plan['price'] ); ?><span>/mo</span></p>
+					<ul>
+						<?php foreach ( $plan['features'] as $feature ) : ?>
+							<li><?php echo esc_html( $feature ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+
 					<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
 						<input type="hidden" name="action" value="ffp_external_upgrade">
 						<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
-						<input type="hidden" name="plan_id" value="price_pro">
-						<?php if ( $show_selector ) : ?>
-							<select name="gateway" style="margin-bottom: 10px;">
-								<option value="stripe">Card (Stripe)</option>
-								<option value="paypal">PayPal</option>
-							</select>
+						<input type="hidden" name="plan_id" value="<?php echo esc_attr( $key ); ?>">
+
+						<?php if ( $key === 'free' ) : ?>
+							<?php if ( $user_id ) : ?>
+								<button type="button" disabled>Current Plan</button>
+							<?php else : ?>
+								<input type="hidden" name="is_registration" value="1">
+								<button type="submit">Join Free & Register</button>
+							<?php endif; ?>
 						<?php else : ?>
-							<input type="hidden" name="gateway" value="<?php echo $stripe_valid ? 'stripe' : 'paypal'; ?>">
+							<?php if ( $any_valid ) : ?>
+								<?php if ( $show_selector ) : ?>
+									<select name="gateway" style="margin-bottom: 10px; width: 100%; padding: 8px; border-radius: 6px;">
+										<option value="stripe">Pay with Card</option>
+										<option value="paypal">Pay with PayPal</option>
+									</select>
+								<?php else : ?>
+									<input type="hidden" name="gateway" value="<?php echo $stripe_valid ? 'stripe' : 'paypal'; ?>">
+								<?php endif; ?>
+								<button type="submit" <?php disabled($current_plan, $key); ?>>
+									<?php echo ($key === $current_plan) ? 'Active Subscription' : $plan['button']; ?>
+								</button>
+							<?php else : ?>
+								<p style="color:#ef4444; font-size:12px; margin-top:10px;">Payment setup incomplete.</p>
+							<?php endif; ?>
 						<?php endif; ?>
-						<button type="submit" <?php disabled($current_plan, 'pro'); ?>><?php echo $current_plan === 'pro' ? 'Active' : 'Get Pro'; ?></button>
 					</form>
-				<?php else: ?>
-					<p style="color:red; font-size:11px;">Payment unavailable.</p>
-				<?php endif; ?>
-			</div>
-			<?php if ( $agency_id === 0 || user_can( $agency_id, 'manage_options' ) ) : ?>
-			<div class="ffp-price-card">
-				<h4>Agency</h4>
-				<p class="price">$99 /mo</p>
-				<?php if ( $any_valid ) : ?>
-					<form method="POST" action="<?php echo admin_url('admin-post.php'); ?>">
-						<input type="hidden" name="action" value="ffp_external_upgrade">
-						<input type="hidden" name="agency_id" value="<?php echo (int) $agency_id; ?>">
-						<input type="hidden" name="plan_id" value="price_agency">
-						<?php if ( $show_selector ) : ?>
-							<select name="gateway" style="margin-bottom: 10px;">
-								<option value="stripe">Card (Stripe)</option>
-								<option value="paypal">PayPal</option>
-							</select>
-						<?php else : ?>
-							<input type="hidden" name="gateway" value="<?php echo $stripe_valid ? 'stripe' : 'paypal'; ?>">
-						<?php endif; ?>
-						<button type="submit" <?php disabled($current_plan, 'agency'); ?>><?php echo $current_plan === 'agency' ? 'Active' : 'Get Agency'; ?></button>
-					</form>
-				<?php else: ?>
-					<p style="color:red; font-size:11px;">Payment unavailable.</p>
-				<?php endif; ?>
-			</div>
-			<?php endif; ?>
+				</div>
+			<?php endforeach; ?>
 		</div>
 		<?php
 		return ob_get_clean();
