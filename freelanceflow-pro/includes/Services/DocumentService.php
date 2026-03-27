@@ -85,11 +85,22 @@ class DocumentService {
 			$logo_url = get_user_meta( $user_id, 'ffp_logo_url', true ) ?: get_option( 'ffp_logo_url', '' );
 
 			if ( $logo_url ) {
-				// Fix: Convert URL to absolute server path for Dompdf compatibility
-				$logo_path = str_replace( content_url(), WP_CONTENT_DIR, $logo_url );
-				if ( file_exists( $logo_path ) ) {
+				// Robust Path Resolution for Dompdf
+				$logo_path = '';
+
+				// Strip protocol for comparison
+				$clean_url = preg_replace( '/^https?:/', '', $logo_url );
+				$content_url_clean = preg_replace( '/^https?:/', '', content_url() );
+
+				if ( strpos( $clean_url, $content_url_clean ) === 0 ) {
+					$relative_path = str_replace( $content_url_clean, '', $clean_url );
+					$logo_path = WP_CONTENT_DIR . $relative_path;
+				}
+
+				if ( $logo_path && file_exists( $logo_path ) ) {
 					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 40px; width: auto; display: block;" />', $logo_path );
 				} else {
+					// Fallback to URL with SSL Context (Handled in export_pdf)
 					$placeholders['business_logo'] = sprintf('<img src="%s" style="max-height: 40px; width: auto; display: block;" />', esc_url($logo_url) );
 				}
 			} else {

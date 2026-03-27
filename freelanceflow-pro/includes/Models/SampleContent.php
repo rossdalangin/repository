@@ -8,10 +8,12 @@ namespace FreelanceFlowPro\Models;
 class SampleContent {
 
 	public static function get_templates() {
-		$branding_header = '<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px;">
-								<div>{{business_logo}}</div>
-								<div style="text-align: right; font-weight: bold; font-size: 18px;">{{business_name}}</div>
-							</div>';
+		$branding_header = '<table style="width: 100%; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px;">
+								<tr>
+									<td style="width: 50%; vertical-align: middle;">{{business_logo}}</td>
+									<td style="width: 50%; text-align: right; vertical-align: middle; font-weight: bold; font-size: 18px; color: #1e293b;">{{business_name}}</td>
+								</tr>
+							</table>';
 
 		return [
 			'freelance_contract' => [

@@ -103,6 +103,27 @@ To get the most out of FreelanceFlow Pro, complete these steps in order:
 
 ---
 
+## 🔑 Subscription Capability Deep-Dive
+
+### PRO TIER: THE BRANDED POWERHOUSE
+Upgrade to Pro to transform from a "freelancer" into a "brand."
+- **Full Template Library:** Access all 16+ templates including SOWs, SOPs, and Content Calendars.
+- **Custom Branding:** Upload your logo in `Profile & Branding`. Our engine automatically scales it to a professional 40px height and aligns it in your documents.
+- **PDF & DOCX Fidelity:** Generate high-resolution PDFs for legal contracts and editable DOCX files for collaborative drafts.
+- **Automated Archival:** Never lose a document. Every generated file is privately saved in your Vault.
+
+### AGENCY TIER: THE SAAS INFRASTRUCTURE
+This is the elite tier for those building a workforce.
+- **Multi-Tenant Team Management:** Create sub-accounts for your freelancers. They get their own private dashboards, but *you* maintain oversight.
+- **Sovereign Payments (The Money-Maker):**
+    1. Navigate to `Profile & Branding`.
+    2. Enter *your* Stripe Secret Key.
+    3. Now, whenever your sub-users or external pricing embeds are used, the funds go directly to your account. You own the financial stack.
+- **White-Labeling:** Replace our branding with yours. Your team sees your logo, your business name, and uses your standardized legal templates.
+- **Auditable Repository:** View all files handled by your team in the "All Files" vault tab. Ensure every freelancer is using the correct, signed contracts.
+
+---
+
 ## 📢 Marketing 101 for Agency Owners
 If you've upgraded to the Agency tier, you're now a SaaS owner. Here’s how to market your new "infrastructure" to your team:
 
@@ -127,6 +148,7 @@ FreelanceFlow Pro exposes a REST API for advanced integrations (AI, CRM, etc).
     - **XAMPP/Local:** The system includes a built-in fix for local SSL issues.
     - **Shared Hosting:** Ensure `allow_url_fopen` is enabled in your `php.ini`.
     - **Corrupted Files:** If PDFs appear blank, ensure no other plugin is outputting content (echo/print) before the generation starts. FreelanceFlow Pro handles output buffer cleaning automatically, but strict host configurations may interfere.
+- **PDF Logo Issues:** We use absolute path resolution for logos. If your logo isn't showing, ensure the image is stored within the standard `wp-content` directory.
 - **DOCX Formatting:** The DOCX export uses a high-compatibility HTML-header method. For complex layouts, we recommend generating a PDF for the best visual fidelity.
 - **Branding not showing?** Free tier users only show the business name. Upgrade to Pro/Agency to enable full Logo support.
 - **Sub-user can't see team files?** Verify the file visibility in the Vault is set to "Visible to All Tiers" or "Visible to Pro & Agency" depending on their plan.
